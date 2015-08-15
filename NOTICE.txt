@@ -1,0 +1,5 @@
+Initially developed by Gordon J. Daugherty in Aug 2015. Please enjoy and contribute!
+
+This was modelled after and uses some code from both the sample sonar plugin that Sonarqube provides and the Sonarqube XML Plugin
+project that was initially developed by Matthijs Galesloot. Thanks go to Sonarqube and Mr Galesloot for licensing those in such a
+way that they can be used by others to expand this ecosystem.
