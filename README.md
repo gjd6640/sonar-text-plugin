@@ -32,5 +32,7 @@ The uses that I had in mind when building this were:
 4. Click the "create" button that appears next to the words "CUSTOM RULES" at the bottom of the rule definition
 5. Define your rule and save it
 6. Activate the new rule in a quality profile
+7. Double-check to ensure that the list of extensions for the 'text' language includes the extension of the file that your rule is looking for.
+8. Double-check to ensure that your "sonar.sources" path will include the file to be scanned. If this path is set to "src/main/java" then Sonar won't scan files at the root of your project or in "src/main/resources".
 
 After you've done the above you'll be ready to run a scan and see the first rule work.
