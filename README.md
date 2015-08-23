@@ -5,7 +5,7 @@ A free and open-source plugin for SonarSource's Sonarqube product that lets you 
 
 <img src=screenshots/Screenshot_IssueDrilldown_DependencyIssue.png>
 
-Other screenshots are available by browsing the "/screenshots" directory in this project.
+Other screenshots are available by browsing the "<a href="screenshots/">/screenshots</a>" directory in this project.
 
 ### Why use this plugin
 
