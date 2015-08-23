@@ -14,7 +14,8 @@ The uses that I had in mind when building this were:
 * Common software configuration mistakes get made in our (dev|test|prod).properties files frequently enough to warrant automated detection. Examples are:
  * JDBC URLs using server names or IP addresses when a DNS CName is more appropriate.
  * Fault-tolerant URLs used with active/active and active/standby infrastructure that list only one of the nodes when it should list all of them (tip: prefer using JNDI-like lookups instead of listing all nodes if you have more than a couple of pieces of software doing this).
-* Unproven idea: Create Sonar issues on any library dependencies that have a known issue.
+
+* Create Sonar issues that flag library dependencies that have a known deficiency, mustn't be used outside of 'test' scope, or mustn't be used at all due to an organizational policy or licensing concern.
  * Build tools such as Maven typically have commands available to generate a list of direct and indirect dependencies. You could run that command prior to the Sonarqube scan, pipe the output to a text file, and maintain a set of rules that apply to that file.
  * This approach wouldn't "fingerprint" Jar libraries or use a public list of issues like OWasp's Dependency-Check does BUT it would give you an easy way to flag versions of libraries from your own portfolio that teams should not be using any more.
 
