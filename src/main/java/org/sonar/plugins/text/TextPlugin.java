@@ -6,7 +6,7 @@ import java.util.List;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
 import org.sonar.api.SonarPlugin;
-import org.sonar.plugins.text.batch.IssueSensor;
+import org.sonar.plugins.text.batch.TextIssueSensor;
 
 @Properties({
 	@Property(
@@ -27,7 +27,7 @@ public final class TextPlugin extends SonarPlugin {
   @Override
   public List getExtensions() {
     return Arrays.asList(
-      IssueSensor.class, 
+      TextIssueSensor.class, 
       TextLanguage.class, 
       TextRulesDefinition.class
       );

@@ -35,7 +35,7 @@ public class IssueSensorTest {
 
 	  private Project project;
 	  private DefaultFileSystem fs;
-	  private IssueSensor sensor; 
+	  private TextIssueSensor sensor; 
 	  private AbstractTextCheck textCheckMock;
 	  private Issuable mockIssuable;
 
@@ -106,7 +106,7 @@ public class IssueSensorTest {
 			when(mockIssueBuilder.message(Mockito.anyString())).thenReturn(mockIssueBuilder);
 			when(mockIssueBuilder.build()).thenReturn(mock(Issue.class));
 
-			sensor = new IssueSensor(fs, resourcePerspectives, checkFactory);
+			sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory);
 	  }
 	  
 	  private DefaultInputFile createInputFile(String name, String language) {

@@ -26,7 +26,7 @@ public class SimpleTextMatchCheck extends AbstractTextCheck {
   @RuleProperty(key = "expression", type = "TEXT", defaultValue = ".*some single-line regex search string.*")
   private String expression;
 
-  @RuleProperty(key = "filePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To use all of the extensions configured for this plugin use '**/*'.")
+  @RuleProperty(key = "filePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
   private String filePattern;
 
   @RuleProperty(

@@ -1,6 +1,12 @@
 ## sonar-text-plugin
 A free and open-source plugin for SonarSource's Sonarqube product that lets you create rules to flag issues in text files.
 
+### Screenshots
+
+<img src=screenshots/Screenshot_IssueDrilldown_DependencyIssue.png>
+
+Other screenshots are available by browsing the "/screenshots" directory in this project.
+
 ### Why use this plugin
 
 The uses that I had in mind when building this were:

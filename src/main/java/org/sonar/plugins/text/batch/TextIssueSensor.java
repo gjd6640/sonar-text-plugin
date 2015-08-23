@@ -18,8 +18,8 @@ import org.sonar.plugins.text.checks.TextSourceFile;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class IssueSensor implements Sensor {
-  private static final Logger LOG = LoggerFactory.getLogger(IssueSensor.class);
+public class TextIssueSensor implements Sensor {
+  private static final Logger LOG = LoggerFactory.getLogger(TextIssueSensor.class);
   
   private final Checks<Object> checks;
   private final FileSystem fs;
@@ -28,7 +28,7 @@ public class IssueSensor implements Sensor {
   /**
    * Use of IoC to get FileSystem
    */
-  public IssueSensor(FileSystem fs, ResourcePerspectives perspectives, CheckFactory checkFactory) {
+  public TextIssueSensor(FileSystem fs, ResourcePerspectives perspectives, CheckFactory checkFactory) {
     this.checks = checkFactory.create(CheckRepository.REPOSITORY_KEY).addAnnotatedChecks(CheckRepository.getCheckClasses());
     this.fs = fs;
     this.resourcePerspectives = perspectives;
