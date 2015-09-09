@@ -33,7 +33,7 @@ public abstract class AbstractTextCheck {
   }
 
   protected boolean shouldFireForProject(String currentProjectKey) {
-    if (doNotFireForProjectKeysRegex == null) {
+    if (doNotFireForProjectKeysRegex == null || "".equals(doNotFireForProjectKeysRegex.trim())) {
       return true;
     } else {
   	  Pattern regexp = Pattern.compile(doNotFireForProjectKeysRegex);
