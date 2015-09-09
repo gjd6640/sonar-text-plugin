@@ -16,7 +16,7 @@ import org.sonar.api.batch.fs.internal.DefaultInputFile;
 public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 
 	@Test
-	public void happyPath() throws IOException {
+	public void simpleCase_successfulMatch() throws IOException {
 		// Set up
 		super.createFileSystem();
 		File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
@@ -24,7 +24,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		check.setExpression(".*objectionable string.*");
 		
 		// Run
-		TextSourceFile result = parseAndCheck(tempFile1, check);
+		TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
 		
 		// Check
 		List<TextIssue> issuesFound = result.getTextIssues();
@@ -34,6 +34,22 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		assertTrue(countTextIssuesFoundAtLine(5, issuesFound) == 1);
 	}
 
+	@Test
+	public void ProjectNameExclusionApplies_matchesIgnored() throws IOException {
+		// Set up
+		super.createFileSystem();
+		File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
+		SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+		check.setExpression(".*objectionable string.*");
+		check.setDoNotFireForProjectKeysRegex(".*do-SPECIAL_THING.*");
+		// Run
+		TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-SPECIAL_THING-blah-blah");
+		
+		// Check
+		List<TextIssue> issuesFound = result.getTextIssues();
+		assertTrue(issuesFound.size() == 0);
+	}
+	
 	private int countTextIssuesFoundAtLine(int lineNumber, List<TextIssue> list) {
 	  int countFound = 0;
 	  for (TextIssue currentIssue : list ) {

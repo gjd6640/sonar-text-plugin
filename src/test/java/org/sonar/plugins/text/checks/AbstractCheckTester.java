@@ -33,10 +33,10 @@ public abstract class AbstractCheckTester {
 
   protected static final String INCORRECT_NUMBER_OF_VIOLATIONS = "Incorrect number of violations";
 
-  protected TextSourceFile parseAndCheck(File file, AbstractTextCheck check) {
+  protected TextSourceFile parseAndCheck(File file, AbstractTextCheck check, String projectKey) {
     TextSourceFile textSourceFile = new TextSourceFile(new DefaultInputFile(file.getPath()).setAbsolutePath(file.getAbsolutePath()));
 
-    check.validate(textSourceFile);
+    check.validate(textSourceFile, projectKey);
     return textSourceFile;
   }
 

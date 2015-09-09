@@ -41,7 +41,7 @@ public class IssueSensorTest {
 
 	  @Before
 	  public void setUp() throws Exception {
-	    project = new Project("");
+	    project = new Project("com.mycorp.projectA.service:service-do-X");
 	    fs = new DefaultFileSystem();
 	    fs.setBaseDir(new File("tmp/"));
 	  }
@@ -79,7 +79,7 @@ public class IssueSensorTest {
 				sourceFile.addViolation(new TextIssue(mock(RuleKey.class), 1, "rule violated"));
 				return null;
 			}
-		}).when(textCheckMock).validate(Mockito.any(TextSourceFile.class));
+		}).when(textCheckMock).validate(Mockito.any(TextSourceFile.class), Mockito.matches("com.mycorp.projectA.service:service-do-X"));
 
 	    sensor.analyse(project, sensorContext);
 

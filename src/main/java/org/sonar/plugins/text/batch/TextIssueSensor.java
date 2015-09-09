@@ -48,7 +48,7 @@ public class TextIssueSensor implements Sensor {
         	
           for (Object check : checks.all()) {
             ((AbstractTextCheck) check).setRuleKey(checks.ruleKey(check));
-            ((AbstractTextCheck) check).validate(textSourceFile);
+            ((AbstractTextCheck) check).validate(textSourceFile, project.getKey());
           }
           saveIssue(textSourceFile);
 
