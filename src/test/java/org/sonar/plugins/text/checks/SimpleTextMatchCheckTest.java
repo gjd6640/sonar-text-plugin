@@ -50,6 +50,24 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		assertTrue(issuesFound.size() == 0);
 	}
 	
+	 @Test
+	  public void FileNameExclusionApplies_matchesIgnored() throws IOException {
+	    // Set up
+	    super.createFileSystem();
+	    File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
+	    SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+	    check.setExpression(".*objectionable string.*");
+	    check.setDoNotFireForProjectKeysRegex(".*do-SPECIAL_THING.*"); // should have no effect here
+	    check.setDoNotFireForTheseFileNamesRegex("file.xml"); // this is the file name that 'super.createFileSystem()' sets so this will have an effect here
+	    
+	    // Run
+	    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
+	    
+	    // Check
+	    List<TextIssue> issuesFound = result.getTextIssues();
+	    assertTrue(issuesFound.size() == 0);
+	  }
+	 
 	private int countTextIssuesFoundAtLine(int lineNumber, List<TextIssue> list) {
 	  int countFound = 0;
 	  for (TextIssue currentIssue : list ) {

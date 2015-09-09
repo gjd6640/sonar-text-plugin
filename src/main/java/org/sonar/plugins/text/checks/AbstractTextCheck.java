@@ -3,6 +3,7 @@ package org.sonar.plugins.text.checks;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.WildcardPattern;
 import org.sonar.check.RuleProperty;
@@ -12,8 +13,11 @@ public abstract class AbstractTextCheck {
   private RuleKey ruleKey;
   private TextSourceFile textSourceFile;
 
-  @RuleProperty(key = "doNotFireForTheseProjectKeys", type = "TEXT", defaultValue = "", description = "Use to exclude certain projects from this rule. Sample pattern: '.*key portion of the project keys for which this rule must not apply.*'")
+  @RuleProperty(key = "doNotFireForTheseProjectKeys", type = "TEXT", defaultValue = "", description = "Use to exclude certain projects from this rule. Sample RegEx patterns: '^someMavenGroupIdPrefix' or 'someArtifactIdEndingDenotingSpecialProjectsToBeExcludedFromRule$'")
   private String doNotFireForProjectKeysRegex;
+
+  @RuleProperty(key = "doNotFireForTheseFileNames", type = "TEXT", defaultValue = "", description = "Use to exclude certain file names from this rule. Sample RegEx pattern: '^(local\\.properties|README.txt)$'")
+  private String doNotFireForTheseFileNamesRegex;
 
   protected final void createViolation(Integer linePosition, String message) {
 	  textSourceFile.addViolation(new TextIssue(ruleKey, linePosition, message));
@@ -42,12 +46,26 @@ public abstract class AbstractTextCheck {
     }
   }
   
+  protected boolean shouldFireOnFile(InputFile currentFile) {
+	  if (doNotFireForTheseFileNamesRegex == null || "".equals(doNotFireForTheseFileNamesRegex.trim())) {
+	    return true;
+	  } else {
+	    Pattern regexp = Pattern.compile(doNotFireForTheseFileNamesRegex);
+	    Matcher matcher = regexp.matcher(currentFile.file().getName());
+	    return !matcher.find();
+	  }
+  }
+  
   public final void setRuleKey(RuleKey ruleKey) {
     this.ruleKey = ruleKey;
   }
   
   public void setDoNotFireForProjectKeysRegex(String doNotFireForProjectKeysRegex) {
-	this.doNotFireForProjectKeysRegex = doNotFireForProjectKeysRegex;
+    this.doNotFireForProjectKeysRegex = doNotFireForProjectKeysRegex;
+  }
+
+  public void setDoNotFireForTheseFileNamesRegex(String doNotFireForTheseFileNamesRegex) {
+    this.doNotFireForTheseFileNamesRegex = doNotFireForTheseFileNamesRegex;
   }
 
   protected void setTextSourceFile(TextSourceFile sourceFile) {

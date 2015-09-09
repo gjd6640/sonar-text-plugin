@@ -61,7 +61,11 @@ public class SimpleTextMatchCheck extends AbstractTextCheck {
   public void validate(TextSourceFile textSourceFile, String projectKey) {
     setTextSourceFile(textSourceFile);
 LOG.info("validating");
-    if (expression != null && shouldFireForProject(projectKey) && isFileIncluded(filePattern)) {
+    if (expression != null && 
+        isFileIncluded(filePattern) &&
+        shouldFireForProject(projectKey) && 
+        shouldFireOnFile(textSourceFile.getInputFile()) 
+        ) {
     	
       Pattern regexp = Pattern.compile(expression);
       Matcher matcher = regexp.matcher(""); // Apply the pattern to search this empty string just to get a matcher reference. We'll reset it in a moment to work against a real string.
