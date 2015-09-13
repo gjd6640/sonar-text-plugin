@@ -13,10 +13,10 @@ public class CheckRepository {
   private CheckRepository() {
   }
 
-  public static List<SimpleTextMatchCheck> getChecks() {
+  public static List<AbstractTextCheck> getChecks() {
     return ImmutableList.of(
-      new SimpleTextMatchCheck()
-//      new FancyOtherCheck(), // When you add a second check you'll also change the return type to the checks' abstract parent class
+        new SimpleTextMatchCheck(),
+        new RequiredStringNotPresentCheck()
       );
   }
 

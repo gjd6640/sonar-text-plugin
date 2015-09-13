@@ -5,7 +5,7 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.3</version>
 
   <name>Sonar Text Plugin</name>
 
