@@ -1,6 +1,8 @@
 ## sonar-text-plugin
 
-A free and open-source Community plugin for SonarSource's Sonarqube product that lets you create rules to flag issues in text files. Currently it supports single-line regex matches.
+A free and open-source Community plugin for SonarSource's Sonarqube product that lets you create rules to flag issues in text files. Currently it supports raising issues:
+* When text matching a regex is present (line-by-line scan & dot does not match all)
+* When text matching regex 'A' is present require that text matching regex 'B' also be present (dot matches all, expressions can describe multiple lines)
 
 ### Screenshots
 
