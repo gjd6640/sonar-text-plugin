@@ -23,7 +23,7 @@ import org.sonar.api.batch.fs.internal.DefaultInputFile;
 public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
 
   @Test
-  public void largeTextFile() throws IOException {
+  public void largeTextFile_noScanPerformed() throws IOException {
     char[] buffer = new char[RequiredStringNotPresentCheck.MAX_CHARACTERS_SCANNED-33]; // fit the trigger expression in below the max
     Arrays.fill(buffer, 'a');
 
@@ -40,6 +40,26 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();
     assertTrue(issuesFound.size() == 0);
+  }
+  
+  @Test
+  public void largeTextFileJustUnderLimit_scanIsPerformed() throws IOException {
+    char[] buffer = new char[RequiredStringNotPresentCheck.MAX_CHARACTERS_SCANNED-150]; // fit the trigger expression in below the max
+    Arrays.fill(buffer, 'a');
+
+    // Set up
+    super.createFileSystem();
+    File tempFile1 = super.createTempFile(String.valueOf(buffer) + "prod-server-01.*prod-server-02:1000");
+    RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+    check.setTriggerExpression("prod-server-01.*prod-server-02:1000");
+    check.setMustExistExpression("prod-server-03");
+    
+    // Run
+    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
+    
+    // Check
+    List<TextIssue> issuesFound = result.getTextIssues();
+    assertTrue(issuesFound.size() == 1);
   }
   
 	@Test
