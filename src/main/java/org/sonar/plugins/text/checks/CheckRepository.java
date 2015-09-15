@@ -16,7 +16,8 @@ public class CheckRepository {
   public static List<AbstractTextCheck> getChecks() {
     return ImmutableList.of(
         new SimpleTextMatchCheck(),
-        new RequiredStringNotPresentCheck()
+        new RequiredStringNotPresentCheck(),
+        new MultilineTextMatchCheck()
       );
   }
 

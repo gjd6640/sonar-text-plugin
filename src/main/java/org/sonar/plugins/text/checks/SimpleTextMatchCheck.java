@@ -60,7 +60,7 @@ public class SimpleTextMatchCheck extends AbstractTextCheck {
   @Override
   public void validate(TextSourceFile textSourceFile, String projectKey) {
     setTextSourceFile(textSourceFile);
-LOG.info("validating");
+//LOG.info("validating");
     if (expression != null && 
         isFileIncluded(filePattern) &&
         shouldFireForProject(projectKey) && 
