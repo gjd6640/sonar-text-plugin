@@ -1,8 +1,10 @@
 ## sonar-text-plugin
 
 A free and open-source Community plugin for SonarSource's Sonarqube product that lets you create rules to flag issues in text files. Currently it supports raising issues:
-* When text matching a regex is present (line-by-line scan & dot does not match all)
-* When text matching regex 'A' is present require that text matching regex 'B' also be present (dot matches all, expressions can describe multiple lines)
+* When text matching a regex is present
+ * Option A: Line-by-line scan & dot does not match all. No file size limitations.
+ * Option B: Multiline match. Dot matches all and expression is compared to the entire file at once. Limited to files of 500k characters in length or fewer.
+* When text matching regex 'A' is present require that text matching regex 'B' also be present (dot matches all, expressions can describe multiple lines). Limited to files of 500k characters or fewer.
 
 ### Screenshots
 
@@ -22,6 +24,7 @@ The uses that I had in mind when building this were:
 * Create Sonar issues that flag library dependencies that have a known deficiency, mustn't be used outside of 'test' scope, or mustn't be used at all due to an organizational policy or licensing concern.
  * Build tools such as Maven typically have commands available to generate a list of direct and indirect dependencies. You could run that command prior to the Sonarqube scan, pipe the output to a text file, and maintain a set of rules that apply to that file.
  * This approach wouldn't "fingerprint" Jar libraries or use a public list of issues like OWasp's Dependency-Check does BUT it would give you an easy way to flag versions of libraries from your own portfolio that teams should not be using any more.
+ * Potential future direction: Maybe create a sonar-dependencies-plugin that understands library dependency reports such as the Maven dependency plugin generates (teach it to understand dependency reports from several popular build tools). That plugin would have a rule template to flag problematic dependencies. It might also expose a custom API that other Sonar plugins can reference when running their rules; for example, the Java plugin might let you apply both a PMD XPath expression and a library version check and only raise an issue when both 'match' (use of a known buggy method / maybe multithreaded use of a call known to be non-threadsafe / enabling a feature via a property that doesn't work properly if a certain library version is being used).
 
 * If your projects contain a shell script that sets environment variables or that does some other work you could use this plugin to run a regular expression search of those files to detect occurrences of some known problematic practice. This might get you by until a shell scripting language plugin is available (I don't think one is at this time).
  
