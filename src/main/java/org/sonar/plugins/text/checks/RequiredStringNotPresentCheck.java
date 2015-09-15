@@ -2,7 +2,6 @@ package org.sonar.plugins.text.checks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.nio.BufferOverflowException;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
