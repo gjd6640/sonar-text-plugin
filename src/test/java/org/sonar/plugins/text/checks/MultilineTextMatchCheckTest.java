@@ -68,6 +68,23 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
     assertTrue(countTextIssuesFoundAtLine(3, issuesFound) == 1);
   }
 
+  @Test
+  public void allStringsNotPresent_IssueRaised_matchesAtFirstCharOnLine_verifyingLineNumberIdentification() throws IOException {
+    // Set up
+    super.createFileSystem();
+    File tempFile1 = super.createTempFile(TEST_FILE_CONTENT);
+    MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setSearchRegularExpression("PALERT:YES");
+    
+    // Run
+    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
+    
+    // Check
+    List<TextIssue> issuesFound = result.getTextIssues();
+    assertTrue("Found " + issuesFound.size() + " issues", issuesFound.size() == 1);
+    assertTrue(countTextIssuesFoundAtLine(4, issuesFound) == 1);
+  }
+  
 	private int countTextIssuesFoundAtLine(int lineNumber, List<TextIssue> list) {
 	  int countFound = 0;
 	  for (TextIssue currentIssue : list ) {
@@ -78,4 +95,10 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
 	  return countFound;
 	}
 	
+	
+	 private String TEST_FILE_CONTENT = "# somecomment\r\n" + 
+	      "\r\n" + 
+	      "# PEMAIL: <<TODO: Add PEmail>>\r\n" + 
+	      "PALERT:YES\r\n" + 
+	      "asdf";
 }

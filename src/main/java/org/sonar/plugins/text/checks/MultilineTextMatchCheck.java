@@ -16,14 +16,15 @@ import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.plugins.text.checks.util.FileIOUtil;
 import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
+import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
 import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "MultilineTextMatchCheck", 
       priority = Priority.MAJOR, 
-      name = "Multiline Regex Check", description = "Multiline (Java Match.DOTALL) regular expression matcher. Scans only text files containing less than " + (MultilineTextMatchCheck.MAX_CHARACTERS_SCANNED-1) + " characters.")
+      name = "Multiline Regex Check", description = "Multiline (Java Match.DOTALL) regular expression matcher. Scans only text files containing less than " + (MultilineTextMatchCheck.MAX_CHARACTERS_SCANNED-1) + " characters. Note that ^ and $ character matching is to beginning and end of file UNLESS you start your expression with (?m).")
 @RuleTemplate
 public class MultilineTextMatchCheck extends AbstractTextCheck {
-  @RuleProperty(key = "regularExpression", type = "TEXT", defaultValue = "^some.*regex search string\\. dot matches all$")
+  @RuleProperty(key = "regularExpression", type = "TEXT", defaultValue = "(?m)^some.*regex search string\\. dot matches all$")
   private String searchRegularExpression;
 
   @RuleProperty(key = "filePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
@@ -85,23 +86,11 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
       if (matcher.find()) {
 //        System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
         int positionOfMatch = matcher.start();
-        lineNumberOfTriggerMatch = countLines(entireFileAsString, positionOfMatch);
+        lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatch);
         createViolation(lineNumberOfTriggerMatch, message);
       }
 
     }
   }
-  
- 
-  private int countLines(String str, int stopAtPosition) {
-    if(str == null || str.isEmpty()) {
-        return 0;
-    }
-    int lines = 1;
-    int pos = 0;
-    while ((pos = str.indexOf("\n", pos) + 1) != 0 && pos < stopAtPosition) {
-        lines++;
-    }
-    return lines;
-  }
+
 }

@@ -34,6 +34,25 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		assertTrue(countTextIssuesFoundAtLine(5, issuesFound) == 1);
 	}
 
+	 @Test
+	  public void simpleCaseInvolvingStartOfLineCharacter_usesStartOfEachLine() throws IOException {
+	    // Set up
+	    super.createFileSystem();
+	    File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\nobjectionable string");
+	    SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+	    check.setExpression("^objectionable string");
+	    
+	    // Run
+	    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
+	    
+	    // Check
+	    List<TextIssue> issuesFound = result.getTextIssues();
+	    assertTrue(issuesFound.size() == 2);
+	    
+	    assertTrue(countTextIssuesFoundAtLine(1, issuesFound) == 1);
+	    assertTrue(countTextIssuesFoundAtLine(5, issuesFound) == 1);
+	  }
+	 
 	@Test
 	public void ProjectNameExclusionApplies_matchesIgnored() throws IOException {
 		// Set up
