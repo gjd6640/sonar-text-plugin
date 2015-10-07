@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
+import org.sonar.plugins.text.checks.util.FileIOUtil;
+import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "RequiredStringNotPresentRegexMatchCheck", 
@@ -82,13 +84,22 @@ public class RequiredStringNotPresentCheck extends AbstractTextCheck {
         ) {
     	
       Path path = textSourceFile.getInputFile().file().toPath();
-      String entireFileAsString = readFileAsString(path);
+      String entireFileAsString;
+      try {
+        entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
+      } catch (LargeFileEncounteredException ex) {
+        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
+        return;
+      }
       
       Pattern regexp = Pattern.compile(triggerExpression, Pattern.DOTALL);
       Matcher matcher = regexp.matcher(entireFileAsString);
       if (matcher.find()) {
 //        System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
         int positionOfMatch = matcher.start();
+System.out.println("Position of match: " + positionOfMatch);
+System.out.println("10 chars starting at the match: " + entireFileAsString.substring(positionOfMatch, positionOfMatch + 10));
+System.out.println("10 chars prior to / ending at at the match: " + entireFileAsString.substring(positionOfMatch-10, positionOfMatch));
         lineNumberOfTriggerMatch = countLines(entireFileAsString, positionOfMatch);
         triggerMatchFound = true;
       }
@@ -134,7 +145,7 @@ public class RequiredStringNotPresentCheck extends AbstractTextCheck {
     }
     int lines = 1;
     int pos = 0;
-    while ((pos = str.indexOf("\n", pos) + 1) != 0 && pos < stopAtPosition) {
+    while ((pos = str.indexOf("\n", pos) + 1) != 0 && pos <= stopAtPosition) {
         lines++;
     }
     return lines;

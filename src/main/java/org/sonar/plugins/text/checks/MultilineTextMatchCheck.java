@@ -1,6 +1,7 @@
 package org.sonar.plugins.text.checks;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.CharBuffer;
@@ -13,6 +14,8 @@ import java.util.regex.Pattern;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
+import org.sonar.plugins.text.checks.util.FileIOUtil;
+import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "MultilineTextMatchCheck", 
@@ -67,9 +70,15 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
         shouldFireForProject(projectKey) && 
         shouldFireOnFile(textSourceFile.getInputFile()) 
         ) {
-    	
+
       Path path = textSourceFile.getInputFile().file().toPath();
-      String entireFileAsString = readFileAsString(path);
+      String entireFileAsString;
+      try {
+        entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
+      } catch (LargeFileEncounteredException ex) {
+        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
+        return;
+      }
       
       Pattern regexp = Pattern.compile(searchRegularExpression, Pattern.DOTALL);
       Matcher matcher = regexp.matcher(entireFileAsString);
@@ -83,27 +92,7 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
     }
   }
   
-  private String readFileAsString(Path path) {
-    CharBuffer fileContentBuffer = CharBuffer.allocate(MAX_CHARACTERS_SCANNED);
-
-    try ( BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8) ) {
-      int result = reader.read(fileContentBuffer);
-      if (result == MAX_CHARACTERS_SCANNED) {
-        System.out.println("Text scanner (RequiredStringNotPresentRegexMatchCheck) maximum scan depth ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + path.toFile().getAbsolutePath() + "'. Did not check this file AT ALL.");
-        return "";
-      } else {
-        fileContentBuffer.flip();
-      }
-      
-    } catch (BufferOverflowException ex) {
-      
-    } catch (IOException ex){
-      throw new RuntimeException(ex);
-    }
-    
-    return fileContentBuffer.toString();
-  }
-  
+ 
   private int countLines(String str, int stopAtPosition) {
     if(str == null || str.isEmpty()) {
         return 0;
