@@ -27,6 +27,24 @@
       <groupId>org.sonarsource.sslr-squid-bridge</groupId>
   	  <artifactId>sslr-squid-bridge</artifactId>
   	  <version>2.7-SNAPSHOT</version>
+  	  <exclusions>
+  	    <exclusion>
+  	      <artifactId>picocontainer</artifactId>
+  	      <groupId>org.picocontainer</groupId>
+  	    </exclusion>
+  	    <exclusion>
+  	      <artifactId>jaxen</artifactId>
+  	      <groupId>jaxen</groupId>
+  	    </exclusion>
+  	    <exclusion>
+  	      <artifactId>sslr-core</artifactId>
+  	      <groupId>org.codehaus.sonar.sslr</groupId>
+  	    </exclusion>
+  	    <exclusion>
+  	      <artifactId>sslr-xpath</artifactId>
+  	      <groupId>org.codehaus.sonar.sslr</groupId>
+  	    </exclusion>
+  	  </exclusions>
     </dependency>
   
     <dependency>
@@ -34,6 +52,20 @@
       <artifactId>sonar-plugin-api</artifactId>
       <version>${sonar.buildVersion}</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>sonar-duplications</artifactId>
+          <groupId>org.codehaus.sonar</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>picocontainer</artifactId>
+          <groupId>org.picocontainer</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>hibernate-annotations</artifactId>
+          <groupId>org.hibernate</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- unit tests -->
