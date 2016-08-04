@@ -8,7 +8,7 @@ public class TextIssue {
   private final int line;
   private final String message;
 
-  public TextIssue(RuleKey ruleKey, int line, String message) {
+  public TextIssue(final RuleKey ruleKey, final int line, final String message) {
     this.ruleKey = ruleKey;
     this.line = line;
     this.message = message;
@@ -24,5 +24,10 @@ public class TextIssue {
 
   public String getMessage() {
     return message;
+  }
+
+  @Override
+  public String toString() {
+    return "TextIssue [ruleKey=" + ruleKey + ", line=" + line + ", message=" + message + "]";
   }
 }

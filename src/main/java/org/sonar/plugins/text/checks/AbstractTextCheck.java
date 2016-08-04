@@ -19,14 +19,14 @@ public abstract class AbstractTextCheck {
   @RuleProperty(key = "doNotFireForTheseFileNames", type = "TEXT", defaultValue = "", description = "Use to exclude certain file names from this rule. Sample RegEx pattern: '^(local\\.properties|README.txt)$'")
   private String doNotFireForTheseFileNamesRegex;
 
-  protected final void createViolation(Integer linePosition, String message) {
+  protected final void createViolation(final Integer linePosition, final String message) {
 	  textSourceFile.addViolation(new TextIssue(ruleKey, linePosition, message));
   }
 
   /**
    * Apply the Ant style file pattern to decide if the file is included
    */
-  protected boolean isFileIncluded(String filePattern) {
+  protected boolean isFileIncluded(final String filePattern) {
     if (filePattern != null) {
       return WildcardPattern.create(filePattern)
         .match(textSourceFile.getLogicalPath());
@@ -36,7 +36,7 @@ public abstract class AbstractTextCheck {
     }
   }
 
-  protected boolean shouldFireForProject(String currentProjectKey) {
+  protected boolean shouldFireForProject(final String currentProjectKey) {
     if (doNotFireForProjectKeysRegex == null || "".equals(doNotFireForProjectKeysRegex.trim())) {
       return true;
     } else {
@@ -45,8 +45,8 @@ public abstract class AbstractTextCheck {
       return !matcher.find();
     }
   }
-  
-  protected boolean shouldFireOnFile(InputFile currentFile) {
+
+  protected boolean shouldFireOnFile(final InputFile currentFile) {
 	  if (doNotFireForTheseFileNamesRegex == null || "".equals(doNotFireForTheseFileNamesRegex.trim())) {
 	    return true;
 	  } else {
@@ -55,23 +55,31 @@ public abstract class AbstractTextCheck {
 	    return !matcher.find();
 	  }
   }
-  
-  public final void setRuleKey(RuleKey ruleKey) {
+
+  public final void setRuleKey(final RuleKey ruleKey) {
     this.ruleKey = ruleKey;
   }
-  
-  public void setDoNotFireForProjectKeysRegex(String doNotFireForProjectKeysRegex) {
+
+  public final RuleKey getRuleKey() {
+    return this.ruleKey;
+  }
+
+  public void setDoNotFireForProjectKeysRegex(final String doNotFireForProjectKeysRegex) {
     this.doNotFireForProjectKeysRegex = doNotFireForProjectKeysRegex;
   }
 
-  public void setDoNotFireForTheseFileNamesRegex(String doNotFireForTheseFileNamesRegex) {
+  public void setDoNotFireForTheseFileNamesRegex(final String doNotFireForTheseFileNamesRegex) {
     this.doNotFireForTheseFileNamesRegex = doNotFireForTheseFileNamesRegex;
   }
 
-  protected void setTextSourceFile(TextSourceFile sourceFile) {
+  protected void setTextSourceFile(final TextSourceFile sourceFile) {
     this.textSourceFile = sourceFile;
   }
 
   public abstract void validate(TextSourceFile sourceFile, String projectKey);
+
+  protected TextSourceFile getTextSourceFile() {
+    return textSourceFile;
+  }
 
 }

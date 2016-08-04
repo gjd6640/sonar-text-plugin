@@ -33,7 +33,7 @@ public abstract class AbstractCheckTester {
 
   protected static final String INCORRECT_NUMBER_OF_VIOLATIONS = "Incorrect number of violations";
 
-  protected TextSourceFile parseAndCheck(File file, AbstractTextCheck check, String projectKey) {
+  protected TextSourceFile parseAndCheck(final File file, final AbstractTextCheck check, final String projectKey) {
     TextSourceFile textSourceFile = new TextSourceFile(new DefaultInputFile(file.getPath()).setAbsolutePath(file.getAbsolutePath()));
 
     check.validate(textSourceFile, projectKey);
@@ -55,7 +55,7 @@ public abstract class AbstractCheckTester {
     return fs;
   }
 
-  protected File createTempFile(String content) throws IOException {
+  protected File createTempFile(final String content) throws IOException {
     File f = temporaryFolder.newFile("file.xml");
     FileUtils.write(f, content);
 

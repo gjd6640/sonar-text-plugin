@@ -1,12 +1,5 @@
 package org.sonar.plugins.text.checks;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,8 +12,8 @@ import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
 import org.sonar.squidbridge.annotations.RuleTemplate;
 
-@Rule(key = "MultilineTextMatchCheck", 
-      priority = Priority.MAJOR, 
+@Rule(key = "MultilineTextMatchCheck",
+      priority = Priority.MAJOR,
       name = "Multiline Regex Check", description = "Multiline (Java Match.DOTALL) regular expression matcher. Scans only text files containing less than " + (MultilineTextMatchCheck.MAX_CHARACTERS_SCANNED-1) + " characters. Note that ^ and $ character matching is to beginning and end of file UNLESS you start your expression with (?m).")
 @RuleTemplate
 public class MultilineTextMatchCheck extends AbstractTextCheck {
@@ -46,30 +39,30 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
     return message;
   }
 
-  public void setSearchRegularExpression(String expression) {
+  public void setSearchRegularExpression(final String expression) {
     this.searchRegularExpression = expression;
   }
 
-  public void setFilePattern(String filePattern) {
+  public void setFilePattern(final String filePattern) {
     this.filePattern = filePattern;
   }
 
-  public void setMessage(String message) {
+  public void setMessage(final String message) {
     this.message = message;
   }
 
   protected static final int MAX_CHARACTERS_SCANNED = 500001;
-  
+
   @Override
-  public void validate(TextSourceFile textSourceFile, String projectKey) {
+  public void validate(final TextSourceFile textSourceFile, final String projectKey) {
     int lineNumberOfTriggerMatch = -1;
 
     setTextSourceFile(textSourceFile);
 
     if (searchRegularExpression != null &&
         isFileIncluded(filePattern) &&
-        shouldFireForProject(projectKey) && 
-        shouldFireOnFile(textSourceFile.getInputFile()) 
+        shouldFireForProject(projectKey) &&
+        shouldFireOnFile(textSourceFile.getInputFile())
         ) {
 
       Path path = textSourceFile.getInputFile().file().toPath();
@@ -77,10 +70,10 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
       try {
         entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
       } catch (LargeFileEncounteredException ex) {
-        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
+//        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
         return;
       }
-      
+
       Pattern regexp = Pattern.compile(searchRegularExpression, Pattern.DOTALL);
       Matcher matcher = regexp.matcher(entireFileAsString);
       if (matcher.find()) {

@@ -17,7 +17,8 @@ public class CheckRepository {
     return ImmutableList.of(
         new SimpleTextMatchCheck(),
         new RequiredStringNotPresentCheck(),
-        new MultilineTextMatchCheck()
+        new MultilineTextMatchCheck(),
+        new StringDisallowedIfMatchInAnotherFileCheck()
       );
   }
 
