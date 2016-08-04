@@ -34,6 +34,7 @@ import org.sonar.api.resources.Project;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.batch.TextIssueSensor;
+import org.sonar.plugins.text.checks.AbstractCrossFileCheck.RulePart;
 
 public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCrossFileCheckTester {
 
@@ -99,13 +100,13 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
     // Execute
     chk.setRuleKey(RuleKey.of("text","rule1"));
     chk.setTextSourceFile(new TextSourceFile(new DefaultInputFile("somepath")));
-    chk.recordMatch("BLAH", 1, "msg");
-    chk.recordMatch("BLAH", 1, "msg");
+    chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
+    chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     chk.setRuleKey(RuleKey.of("text","rule2"));
     chk.setTextSourceFile(new TextSourceFile(new DefaultInputFile("someOtherPath")));
-    chk.recordMatch("BLAH", 1, "msg");
-    chk.recordMatch("BLAH", 1, "msg");
+    chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
+    chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     // Verify
     Assert.assertTrue(rawResults.size() == 2);
@@ -125,9 +126,9 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
 
     chk.setCrossFileChecksRawResults(rawResults);
     List<CrossFileScanPrelimIssue> issuesForOneFile = new LinkedList<CrossFileScanPrelimIssue>();
-    issuesForOneFile.add(new CrossFileScanPrelimIssue("TriggerPattern", RuleKey.of("text","rule1"), 1, "msg"));
-    issuesForOneFile.add(new CrossFileScanPrelimIssue("DisallowPattern", RuleKey.of("text","rule1"), 1, "msg"));
-    issuesForOneFile.add(new CrossFileScanPrelimIssue("DisallowPattern", RuleKey.of("text","rule2"), 1, "msg"));  // not triggered, should not raise an issue
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.TriggerPattern, RuleKey.of("text","rule1"), 1, "msg"));
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule1"), 1, "msg"));
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule2"), 1, "msg"));  // not triggered, should not raise an issue
     rawResults.put(new DefaultInputFile("file1"), issuesForOneFile);
 
     // Execute

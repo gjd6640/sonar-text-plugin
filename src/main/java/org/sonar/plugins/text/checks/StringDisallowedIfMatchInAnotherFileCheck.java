@@ -71,7 +71,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     	        matcher.reset(line); //reset the input
     	        if (matcher.find()) {
 //    	          System.out.println("Trigger match: " + line + " on line " + lineReader.getLineNumber());
-    	          recordMatch("TriggerPattern", lineReader.getLineNumber(), message);
+    	          recordMatch(RulePart.TriggerPattern, lineReader.getLineNumber(), message);
 //    	          break;
     	        }
     	      }
@@ -102,7 +102,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
               matcher.reset(line); //reset the input
               if (matcher.find()) {
 //                System.out.println("Disallow match: " + line + " on line " + lineReader.getLineNumber());
-                recordMatch("DisallowPattern", lineReader.getLineNumber(), message);
+                recordMatch(RulePart.DisallowPattern, lineReader.getLineNumber(), message);
               }
             }
           }

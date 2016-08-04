@@ -1,10 +1,11 @@
 package org.sonar.plugins.text.checks;
 
 import org.sonar.api.rule.RuleKey;
+import org.sonar.plugins.text.checks.AbstractCrossFileCheck.RulePart;
 
 public class CrossFileScanPrelimIssue extends TextIssue {
 
-  private final String rulePart;
+  private final RulePart rulePart;
 
   /**
    *
@@ -16,12 +17,12 @@ public class CrossFileScanPrelimIssue extends TextIssue {
    *           and
    *         2) Which "rulePart" to raise as an issue. We'll have the flexibility to use the first match pattern as a trigger to enable raising an issue only on occurrences of the second match pattern OR we can raise issues for matches on both patterns.
    */
-  public CrossFileScanPrelimIssue(final String rulePart, final RuleKey ruleKey, final int line, final String message) {
+  public CrossFileScanPrelimIssue(final RulePart rulePart, final RuleKey ruleKey, final int line, final String message) {
     super(ruleKey, line, message);
     this.rulePart = rulePart;
   }
 
-  public String getRulePart() {
+  public RulePart getRulePart() {
     return rulePart;
   }
 

@@ -17,7 +17,7 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
   }
 
   // Later will be moved to a new parent abstract class used by cross-file checks
-  protected final void recordMatch(final String rulePart, final Integer linePosition, final String message) {
+  protected final void recordMatch(final RulePart rulePart, final Integer linePosition, final String message) {
 
     CrossFileScanPrelimIssue issueToRecord = new CrossFileScanPrelimIssue(rulePart, this.getRuleKey(), linePosition, message);
 
@@ -56,7 +56,7 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
     for (Entry<InputFile, List<CrossFileScanPrelimIssue>> currentInputFileEntry : crossFileChecksRawResults.entrySet()) {
       List<CrossFileScanPrelimIssue> prelimIssues = currentInputFileEntry.getValue();
       for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
-        if ("TriggerPattern".equals(currentPrelimIssue.getRulePart()) && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
+        if (RulePart.TriggerPattern == currentPrelimIssue.getRulePart() && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
           ruleTriggered = true;
 //          System.out.println("Trigger detected during final cross-file processing: " + currentPrelimIssue);
           break;
@@ -70,7 +70,7 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
         setTextSourceFile(new TextSourceFile(currentInputFileEntry.getKey()));
 
         for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
-          if ("DisallowPattern".equals(currentPrelimIssue.getRulePart()) && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
+          if (RulePart.DisallowPattern == currentPrelimIssue.getRulePart() && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
 //            System.out.println("Raising issue on: " + currentPrelimIssue);
             createViolation(currentPrelimIssue.getLine(), currentPrelimIssue.getMessage());
           }
@@ -80,6 +80,15 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
       }
     }
     return textSourceFiles;
+  }
+
+  enum RulePart {
+    TriggerPattern("TriggerPattern"), DisallowPattern("DisallowPattern");
+    String value;
+
+    RulePart(final String value) {
+      this.value = value;
+    }
   }
 
 }
