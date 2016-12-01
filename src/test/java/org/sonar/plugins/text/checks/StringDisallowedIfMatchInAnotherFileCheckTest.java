@@ -166,7 +166,7 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
     when(mockIssueBuilder.message(Mockito.anyString())).thenReturn(mockIssueBuilder);
     when(mockIssueBuilder.build()).thenReturn(mock(Issue.class));
 
-    sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory);
+    sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory, project);
   }
 
   private DefaultInputFile createInputFile(final String name, final String language) {
@@ -175,15 +175,5 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       .setType(InputFile.Type.MAIN)
       .setAbsolutePath(new File("src/test/resources/sensorIT/StringDisallowedIfMatchInAnotherFile/" + name).getAbsolutePath());
   }
-
-	private int countTextIssuesFoundAtLine(final int lineNumber, final List<TextIssue> list) {
-	  int countFound = 0;
-	  for (TextIssue currentIssue : list ) {
-		if (currentIssue.getLine() == lineNumber) {
-			countFound++;
-		}
-	  }
-	  return countFound;
-	}
 
 }

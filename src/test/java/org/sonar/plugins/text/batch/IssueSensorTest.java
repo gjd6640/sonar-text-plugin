@@ -22,8 +22,8 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.issue.Issuable;
-import org.sonar.api.issue.Issue;
 import org.sonar.api.issue.Issuable.IssueBuilder;
+import org.sonar.api.issue.Issue;
 import org.sonar.api.resources.Project;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.TextLanguage;
@@ -35,7 +35,7 @@ public class IssueSensorTest {
 
 	  private Project project;
 	  private DefaultFileSystem fs;
-	  private TextIssueSensor sensor; 
+	  private TextIssueSensor sensor;
 	  private AbstractTextCheck textCheckMock;
 	  private Issuable mockIssuable;
 
@@ -48,14 +48,14 @@ public class IssueSensorTest {
 
 	  @Test
 	  public void shouldExecuteOnProject_No_EmptyProject() {
-		// No setup needed. Project starts out empty already 
+		// No setup needed. Project starts out empty already
 		assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
 	  }
 
 	  @Test
 	  public void shouldExecuteOnProject_No_OnlyJavaFiles() {
  	    fs.add(createInputFile("file.java", "java"));
- 	    assertThat(sensor.shouldExecuteOnProject(project)).isFalse(); 
+ 	    assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
 	  }
 
 	  @Test
@@ -68,13 +68,13 @@ public class IssueSensorTest {
 	  public void analyse() {
 		// Setup
 		SensorContext sensorContext = mock(SensorContext.class);
-	
+
 		// Run
 		fs.add(createInputFile("setup.properties", TextLanguage.KEY));
 
 		Mockito.doAnswer(new Answer<Void>() {
 			@Override
-			public Void answer(InvocationOnMock invocation) throws Throwable {
+			public Void answer(final InvocationOnMock invocation) throws Throwable {
 				TextSourceFile sourceFile = (TextSourceFile)invocation.getArguments()[0];
 				sourceFile.addViolation(new TextIssue(mock(RuleKey.class), 1, "rule violated"));
 				return null;
@@ -95,9 +95,9 @@ public class IssueSensorTest {
 			textCheckMock = mock(AbstractTextCheck.class);
 			List<Object> checksList = Arrays.asList(new Object[] {textCheckMock});
 			when(checks.all()).thenReturn(checksList);
-			
+
 			when(checks.addAnnotatedChecks(Mockito.anyCollection())).thenReturn(checks);
-			mockIssuable = mock(Issuable.class); 
+			mockIssuable = mock(Issuable.class);
 			when(resourcePerspectives.as(Mockito.eq(Issuable.class), Mockito.isA(InputFile.class))).thenReturn(mockIssuable);
 			IssueBuilder mockIssueBuilder = mock(IssueBuilder.class);
 			when(mockIssuable.newIssueBuilder()).thenReturn(mockIssueBuilder);
@@ -106,10 +106,10 @@ public class IssueSensorTest {
 			when(mockIssueBuilder.message(Mockito.anyString())).thenReturn(mockIssueBuilder);
 			when(mockIssueBuilder.build()).thenReturn(mock(Issue.class));
 
-			sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory);
+			sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory, project);
 	  }
-	  
-	  private DefaultInputFile createInputFile(String name, String language) {
+
+	  private DefaultInputFile createInputFile(final String name, final String language) {
 		    return new DefaultInputFile(name)
 		      .setLanguage(language)
 		      .setType(InputFile.Type.MAIN)

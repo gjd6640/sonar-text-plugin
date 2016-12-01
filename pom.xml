@@ -5,7 +5,7 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>0.6</version>
+  <version>0.7</version>
 
   <name>Sonar Text Plugin</name>
 
@@ -26,7 +26,7 @@
     <dependency>
       <groupId>org.sonarsource.sslr-squid-bridge</groupId>
   	  <artifactId>sslr-squid-bridge</artifactId>
-  	  <version>2.7-SNAPSHOT</version>
+  	  <version>2.6.1</version>
   	  <exclusions>
   	    <exclusion>
   	      <artifactId>picocontainer</artifactId>
@@ -109,53 +109,7 @@
           <target>${jdk.min.version}</target>
         </configuration>
       </plugin>
-      <plugin>
-        <!-- UTF-8 bundles are not supported by Java, so they must be converted during build -->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>native2ascii-maven-plugin</artifactId>
-        <version>1.0-beta-1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>native2ascii</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
-    <pluginManagement>
-    	<plugins>
-    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-    		<plugin>
-    			<groupId>org.eclipse.m2e</groupId>
-    			<artifactId>lifecycle-mapping</artifactId>
-    			<version>1.0.0</version>
-    			<configuration>
-    				<lifecycleMappingMetadata>
-    					<pluginExecutions>
-    						<pluginExecution>
-    							<pluginExecutionFilter>
-    								<groupId>org.codehaus.mojo</groupId>
-    								<artifactId>
-    									native2ascii-maven-plugin
-    								</artifactId>
-    								<versionRange>
-    									[1.0-beta-1,)
-    								</versionRange>
-    								<goals>
-    									<goal>native2ascii</goal>
-    								</goals>
-    							</pluginExecutionFilter>
-    							<action>
-    								<ignore></ignore>
-    							</action>
-    						</pluginExecution>
-    					</pluginExecutions>
-    				</lifecycleMappingMetadata>
-    			</configuration>
-    		</plugin>
-    	</plugins>
-    </pluginManagement>
   </build>
 
   <description>Provides support for writing rules to generate issues based on matching rule patterns to text files.</description>

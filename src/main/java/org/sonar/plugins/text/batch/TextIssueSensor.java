@@ -1,6 +1,5 @@
 package org.sonar.plugins.text.batch;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,58 +22,76 @@ import org.sonar.plugins.text.checks.TextIssue;
 import org.sonar.plugins.text.checks.TextSourceFile;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 
 public class TextIssueSensor implements Sensor {
-  private static final Logger LOG = LoggerFactory.getLogger(TextIssueSensor.class);
+  private final Logger LOG = LoggerFactory.getLogger(TextIssueSensor.class);
 
   private final Checks<Object> checks;
   private final FileSystem fs;
   private final ResourcePerspectives resourcePerspectives;
+  private final Project project;
+  final Map<InputFile, List<CrossFileScanPrelimIssue>> crossFileChecksRawResults;
 
   /**
    * Use of IoC to get FileSystem
    */
-  public TextIssueSensor(final FileSystem fs, final ResourcePerspectives perspectives, final CheckFactory checkFactory) {
+  public TextIssueSensor(final FileSystem fs, final ResourcePerspectives perspectives, final CheckFactory checkFactory, final Project project) {
     this.checks = checkFactory.create(CheckRepository.REPOSITORY_KEY).addAnnotatedChecks(CheckRepository.getCheckClasses());
     this.fs = fs;
     this.resourcePerspectives = perspectives;
+    this.project = project;
+
+    // This data structure is shared across all cross-file checks so they can see each others' data.
+    // Each file with any trigger or disallow match gets a listitem indicating the specifics of the Check that matched including line number. This object reference stays with the check and gets referenced later inside the "raiseIssuesAfterScan()" method call.
+    this.crossFileChecksRawResults = Maps.newHashMap();
   }
 
+  /**
+   * This sensor is executed only when there are "text" language files present in the project.
+   *
+   * Consider in future versions: Will all users want this behavior? This plugin now scans files from other languages when the rule's ant-style file path pattern directs it to...
+   */
   @Override
   public boolean shouldExecuteOnProject(final Project project) {
-    // This sensor is executed only when there are Text files
     return fs.hasFiles(fs.predicates().hasLanguage("text"));
   }
 
   @Override
   public void analyse(final Project project, final SensorContext sensorContext) {
 
-    // Note that currently this data structure is shared across all cross-file checks so they can see each others' data.
-    // Each file with any trigger or disallow match gets a listitem indicating the specifics of the Check that matched including line number. This object reference stays with the check and gets referenced later inside the "raiseIssuesAfterScan()" method call.
-    Map<InputFile, List<CrossFileScanPrelimIssue>> crossFileChecksRawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
-
-
     for (InputFile inputFile : fs.inputFiles(fs.predicates().hasType(InputFile.Type.MAIN))) {
-        try {
-          TextSourceFile textSourceFile = new TextSourceFile(inputFile);
+      analyseIndividualFile(inputFile);
+    }
 
-          for (Object check : checks.all()) {
-            if (check instanceof AbstractCrossFileCheck) {
-              // Calls to cross-file checks need to pass in the data structure used to collect match data
-              ((AbstractCrossFileCheck) check).setRuleKey(checks.ruleKey(check));
-              ((AbstractCrossFileCheck) check).validate(crossFileChecksRawResults, textSourceFile, project.getKey());
-            } else {
-              ((AbstractTextCheck) check).setRuleKey(checks.ruleKey(check));
-              ((AbstractTextCheck) check).validate(textSourceFile, project.getKey());
-            }
-          }
-          saveIssue(textSourceFile);
+    raiseCrossFileCheckIssues();
 
-        } catch (Exception e) {
-          LOG.error("Could not analyze the file " + inputFile.file().getAbsolutePath(), e);
+  }
+
+  private void analyseIndividualFile(final InputFile inputFile) {
+    try {
+      TextSourceFile textSourceFile = new TextSourceFile(inputFile);
+
+      for (Object check : checks.all()) {
+        if (check instanceof AbstractCrossFileCheck) {
+          // Calls to cross-file checks need to pass in the data structure used to collect match data
+          AbstractCrossFileCheck crossFileCheck = (AbstractCrossFileCheck) check;
+          crossFileCheck.setRuleKey(checks.ruleKey(check));
+          crossFileCheck.validate(crossFileChecksRawResults, textSourceFile, project.getKey());
+        } else {
+          AbstractTextCheck textCheck = (AbstractTextCheck) check;
+          textCheck.setRuleKey(checks.ruleKey(check));
+          textCheck.validate(textSourceFile, project.getKey());
         }
       }
+      saveIssue(textSourceFile);
 
+    } catch (Exception e) {
+      LOG.error("Could not analyze the file {}", inputFile.file().getAbsolutePath(), e);
+    }
+  }
+
+  private void raiseCrossFileCheckIssues() {
     for (Object check : checks.all()) {
       if (check instanceof AbstractCrossFileCheck) {
         List<TextSourceFile> textSourceFiles = ((AbstractCrossFileCheck) check).raiseIssuesAfterScan();
@@ -84,7 +101,6 @@ public class TextIssueSensor implements Sensor {
         }
       }
     }
-
   }
 
   @VisibleForTesting
@@ -101,11 +117,6 @@ public class TextIssueSensor implements Sensor {
             .build());
       }
     }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
   }
 
 }

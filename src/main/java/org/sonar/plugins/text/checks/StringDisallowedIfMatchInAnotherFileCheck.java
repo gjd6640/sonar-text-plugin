@@ -49,14 +49,15 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
                       ) {
     setTextSourceFile(textSourceFile);
     setCrossFileChecksRawResults(crossFileChecksRawResults);
-//    System.out.println("Current file: " + textSourceFile.getInputFile().absolutePath());
-//LOG.info("validating");
+    LOG.debug("Current file: {}", textSourceFile.getInputFile().absolutePath());
+    LOG.debug("validating");
+
     if (triggerExpression != null &&
         isFileIncluded(triggerFilePattern) &&
         shouldFireForProject(projectKey) &&
         shouldFireOnFile(textSourceFile.getInputFile())
         ) {
-//      System.out.println("Checking file: " + textSourceFile.getInputFile().absolutePath());
+      LOG.debug("Checking file: {}", textSourceFile.getInputFile().absolutePath());
 
       Pattern regexp = Pattern.compile(triggerExpression);
       Matcher matcher = regexp.matcher(""); // Apply the pattern to search this empty string just to get a matcher reference. We'll reset it in a moment to work against a real string.
@@ -70,9 +71,8 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     	      while ((line = lineReader.readLine()) != null) {
     	        matcher.reset(line); //reset the input
     	        if (matcher.find()) {
-//    	          System.out.println("Trigger match: " + line + " on line " + lineReader.getLineNumber());
+    	          LOG.debug("Trigger match: {} on line {}", line, lineReader.getLineNumber());
     	          recordMatch(RulePart.TriggerPattern, lineReader.getLineNumber(), message);
-//    	          break;
     	        }
     	      }
     	    }
@@ -80,7 +80,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     	      throw new RuntimeException(ex);
     	    }
     } else {
-//      System.out.println("Did not check file '" + textSourceFile.getInputFile().absolutePath() + "' for trigger.");
+      LOG.debug("Did not check file '{}' for trigger because it looked like a file that I shouldn't process.", textSourceFile.getInputFile().absolutePath());
     }
 
     if (disallowExpression != null &&
@@ -101,7 +101,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
             while ((line = lineReader.readLine()) != null) {
               matcher.reset(line); //reset the input
               if (matcher.find()) {
-//                System.out.println("Disallow match: " + line + " on line " + lineReader.getLineNumber());
+                LOG.debug("Disallow match found: '{}' on line {}.", line, lineReader.getLineNumber());
                 recordMatch(RulePart.DisallowPattern, lineReader.getLineNumber(), message);
               }
             }

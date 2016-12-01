@@ -27,13 +27,7 @@ public abstract class AbstractTextCheck {
    * Apply the Ant style file pattern to decide if the file is included
    */
   protected boolean isFileIncluded(final String filePattern) {
-    if (filePattern != null) {
-      return WildcardPattern.create(filePattern)
-        .match(textSourceFile.getLogicalPath());
-
-    } else {
-      return true;
-    }
+    return (filePattern == null) ? true :  WildcardPattern.create(filePattern).match(textSourceFile.getLogicalPath());
   }
 
   protected boolean shouldFireForProject(final String currentProjectKey) {
