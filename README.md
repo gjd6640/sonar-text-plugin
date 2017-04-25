@@ -25,10 +25,11 @@ The uses that I had in mind when building this were:
 * Create Sonar issues that flag library dependencies that have a known deficiency, mustn't be used outside of 'test' scope, or mustn't be used at all due to an organizational policy or licensing concern.
  * Build tools such as Maven typically have commands available to generate a list of direct and indirect dependencies. You could run that command prior to the Sonarqube scan, pipe the output to a text file, and maintain a set of rules that apply to that file.
  * This approach wouldn't "fingerprint" Jar libraries or use a public list of issues like OWasp's Dependency-Check does BUT it would give you an easy way to flag versions of libraries from your own portfolio that teams should not be using any more.
- * Potential future direction: Maybe create a sonar-dependencies-plugin that understands library dependency reports such as the Maven dependency plugin generates (teach it to understand dependency reports from several popular build tools). That plugin would have a rule template to flag problematic dependencies. It might also expose a custom API that other Sonar plugins can reference when running their rules; for example, the Java plugin might let you apply both a PMD XPath expression and a library version check and only raise an issue when both 'match' (use of a known buggy method / maybe multithreaded use of a call known to be non-threadsafe / enabling a feature via a property that doesn't work properly if a certain library version is being used).
 
-* If your projects contain a shell script that sets environment variables or that does some other work you could use this plugin to run a regular expression search of those files to detect occurrences of some known problematic practice. This might get you by until a shell scripting language plugin is available (I don't think one is at this time).
- 
+* Raise issues on usages of some construct (class, method, enumeration value, whatever) when a particular library dependency is present. This is useful when a known bug exists in the library that only presents if you're using some little-used feature of that library. This functionality enables you to highlight only the problematic cases so that teams don't spend time upgrading away from a buggy library version unnecessarily.
+
+* If your projects contain a shell script that sets environment variables or that does some other work you could use this plugin to run a regular expression search of those files to detect occurrences of some known problematic practice. This might get you by until a shell scripting language plugin is available. Note that a python plugin is currently available. I'm not aware of available plugins for Korn or Bash shell scripts.
+
 ### To install the plugin:
 1. Ctrl-F for "release" on this Github page and click that link
 2. Download the plugin Jar file
@@ -46,3 +47,8 @@ The uses that I had in mind when building this were:
 8. Double-check to ensure that your "sonar.sources" path will include the file to be scanned. If this path is set to "src/main/java" then Sonar won't scan files at the root of your project or in "src/main/resources".
 
 After you've done the above you'll be ready to run a scan and see the first rule work.
+
+
+### A use-case that I don't plan to solve via this plugin
+
+Truly understanding library dependencies & specifying rules about those dependencies in a build tool agnostic manner is out of scope. That fits better in a "sonar-dependencies-plugin" that'd understand library dependency reports such as the Maven dependency plugin generates (teach it to understand dependency reports from several popular build tools). That plugin would have a rule template to flag problematic dependencies. It might also expose a custom API that other Sonar plugins can reference when running their rules; for example, the Java plugin might let you apply both a PMD XPath expression and a library version check and only raise an issue when both 'match' (use of a known buggy method / maybe multithreaded use of a call known to be non-threadsafe / enabling a feature via a property that doesn't work properly if a certain library version is being used).
