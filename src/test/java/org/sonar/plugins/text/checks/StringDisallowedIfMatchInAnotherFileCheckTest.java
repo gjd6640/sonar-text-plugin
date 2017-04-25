@@ -80,6 +80,45 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       realStringDisallowedMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
       realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
       realStringDisallowedMultiFileCheck.setDisallowExpression(".*JAVA_HOME=.*jdk1.(6|7).*");
+      realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
+
+      realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
+
+    // Run
+    sensor.analyse(project, sensorContext);
+
+    // Verify
+    verify(mockIssuable).addIssue(Mockito.isA(Issue.class));
+  }
+
+  @Test
+  public void analyse_multi_class_integration_test_multiline_aka_DOTALL_regex() throws IOException {
+    // Setup
+    SensorContext sensorContext = mock(SensorContext.class);
+
+      // Create files to be scanned
+      // File containing trigger pattern
+      DefaultInputFile inputFile = createInputFile("effective-pom.xml", TextLanguage.KEY);
+      fs.add(inputFile);
+      List<String> lines = Arrays.asList("The first line", "<target>1.8</target>", "The third line");
+      Path file = Paths.get(inputFile.file().getAbsolutePath());
+      inputFile.file().getParentFile().mkdirs();
+      Files.write(file, lines, Charset.forName("UTF-8"));
+
+      // File with disallowed config
+      inputFile = createInputFile("feature-setup-env.properties", TextLanguage.KEY);
+      fs.add(inputFile);
+      lines = Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line");
+      file = Paths.get(inputFile.file().getAbsolutePath());
+      inputFile.file().getParentFile().mkdirs();
+      Files.write(file, lines, Charset.forName("UTF-8"));
+
+      // Configure the check
+      realStringDisallowedMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
+      realStringDisallowedMultiFileCheck.setTriggerExpression("(?s).*<target>1.8</target>.*third");
+      realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
+      realStringDisallowedMultiFileCheck.setDisallowExpression("(?s).*JAVA_HOME=.*jdk1.(6|7).*third");
+      realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(false);
 
       realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 

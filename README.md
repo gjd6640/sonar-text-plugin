@@ -1,10 +1,11 @@
 ## sonar-text-plugin
 
-A free and open-source Community plugin for SonarSource's Sonarqube product that lets you create rules to flag issues in text files. Currently it supports raising issues:
-* When text matching a regex is present
- * Option A: Line-by-line scan & dot does not match all. No file size limitations.
- * Option B: Multiline match. Dot matches all and expression is compared to the entire file at once. Limited to files of 500k characters in length or fewer.
-* When text matching regex 'A' is present require that text matching regex 'B' also be present (dot matches all, expressions can describe multiple lines). Limited to files of 500k characters or fewer.
+A free and open-source Community plugin for SonarSource's Sonarqube product that lets you create custom rules to flag issues in text files. Currently it supports raising issues by:
+ * Using regular expressions to define & locate text
+ * Scanning files of >500,000 bytes one line at a time
+ * Using DOTALL regular expressions to match across several lines. This method only looks at the first 500,000 bytes of the file
+ * Requiring that text matching regex 'A' be present any time that text matching regex 'B' is present in that same file (this one always uses the DOTALL approach)
+ * Forbidding the presence of text matching regex 'A' in one set of files any time that text matching regex 'B' exists in another set of files. This can be run in single-line or DOTALL mode.
 
 ### Screenshots
 
