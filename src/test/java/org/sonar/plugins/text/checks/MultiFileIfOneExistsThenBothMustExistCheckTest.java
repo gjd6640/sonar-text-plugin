@@ -36,12 +36,12 @@ import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.batch.TextIssueSensor;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck.RulePart;
 
-public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCrossFileCheckTester {
+public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCrossFileCheckTester {
 
   private Project project;
   private DefaultFileSystem fs;
   private TextIssueSensor sensor;
-  private final StringDisallowedIfMatchInAnotherFileCheck realStringDisallowedMultiFileCheck = new StringDisallowedIfMatchInAnotherFileCheck();
+  private final MultiFileIfOneStringExistsThenBothMustExistCheck realIfOneStringExistsBothMustExistMultiFileCheck = new MultiFileIfOneStringExistsThenBothMustExistCheck();
   private Issuable mockIssuable;
 
   @Before
@@ -76,13 +76,13 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       Files.write(file, lines, Charset.forName("UTF-8"));
 
       // Configure the check
-      realStringDisallowedMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
-      realStringDisallowedMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
-      realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
-      realStringDisallowedMultiFileCheck.setDisallowExpression(".*JAVA_HOME=.*jdk1.(6|7).*");
-      realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
+      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistFilePattern("**/*setup-env*");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistExpression(".*-DFooProperty");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
 
-      realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMessage("Project compiled to target Java 8 doesn't have recommended system property 'FooProperty'.");
 
     // Run
     sensor.analyse(project, sensorContext);
@@ -114,13 +114,13 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       Files.write(file, lines, Charset.forName("UTF-8"));
 
       // Configure the check
-      realStringDisallowedMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
-      realStringDisallowedMultiFileCheck.setTriggerExpression("(?s).*<target>1.8</target>.*third");
-      realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
-      realStringDisallowedMultiFileCheck.setDisallowExpression("(?s).*JAVA_HOME=.*jdk1.(6|7).*third");
-      realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(false);
+      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerExpression("(?s).*<target>1.8</target>.*third");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistFilePattern("**/*setup-env*");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistExpression("(?s).*-DFooProperty.*third");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(false);
 
-      realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
+      realIfOneStringExistsBothMustExistMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 
     // Run
     sensor.analyse(project, sensorContext);
@@ -132,7 +132,7 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
   @Test
   public void recordMatchTest(){
     // Set up
-    StringDisallowedIfMatchInAnotherFileCheck chk = new StringDisallowedIfMatchInAnotherFileCheck();
+    MultiFileIfOneStringExistsThenBothMustExistCheck chk = new MultiFileIfOneStringExistsThenBothMustExistCheck();
     Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
     chk.setCrossFileChecksRawResults(rawResults);
 
@@ -149,7 +149,6 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
 
     // Verify
     Assert.assertTrue(rawResults.size() == 2);
-    //List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.values().iterator().next();
     List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.get(new DefaultInputFile("somepath"));
     Assert.assertTrue(issuesForOneFile.size() == 2);
 
@@ -160,14 +159,21 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
   @Test
   public void raiseIssuesAfterScanTest() {
     // Set up
-    StringDisallowedIfMatchInAnotherFileCheck chk = new StringDisallowedIfMatchInAnotherFileCheck();
+    MultiFileIfOneStringExistsThenBothMustExistCheck chk = new MultiFileIfOneStringExistsThenBothMustExistCheck();
     Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
 
     chk.setCrossFileChecksRawResults(rawResults);
     List<CrossFileScanPrelimIssue> issuesForOneFile = new LinkedList<CrossFileScanPrelimIssue>();
+    // Case A: trigger and "must exist" are present. No issue should be raised.
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.TriggerPattern, RuleKey.of("text","rule1"), 1, "msg"));
-    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule1"), 1, "msg"));
-    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule2"), 1, "msg"));  // not triggered, should not raise an issue
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.MustAlsoExistPattern, RuleKey.of("text","rule1"), 1, "msg"));
+    // Case B: trigger exists but "must exist" pattern is not present. An issue should be raised.
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.TriggerPattern, RuleKey.of("text","rule2"), 1, "msg"));  // no corresponding "must also exist" pattern was found, should trigger raising an issue
+    // Case C: Trigger was not found. The "must exist" pattern is present. No issue should be raised.
+    issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.MustAlsoExistPattern, RuleKey.of("text","rule3"), 1, "msg"));
+    // Case D: Neither Trigger nor "must exist" was found. No issue should be raised.
+       // This space intentionally left blank. No matches found.
+
     rawResults.put(new DefaultInputFile("file1"), issuesForOneFile);
 
     // Execute
@@ -177,9 +183,17 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
     chk.setRuleKey(RuleKey.of("text","rule2"));
     List<TextSourceFile> rule2Results = chk.raiseIssuesAfterScan();
 
+    chk.setRuleKey(RuleKey.of("text","rule3"));
+    List<TextSourceFile> rule3Results = chk.raiseIssuesAfterScan();
+
+    chk.setRuleKey(RuleKey.of("text","rule4"));
+    List<TextSourceFile> rule4Results = chk.raiseIssuesAfterScan();
+
     // Verify
-    Assert.assertTrue(rule1Results.size() == 1);
-    Assert.assertTrue(rule2Results.size() == 0);
+    Assert.assertTrue(rule1Results.size() == 0);
+    Assert.assertTrue(rule2Results.size() == 1);
+    Assert.assertTrue(rule3Results.size() == 0);
+    Assert.assertTrue(rule4Results.size() == 0);
 
   }
 
@@ -189,10 +203,11 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
     Checks<Object> checks = mock(Checks.class);
     CheckFactory checkFactory = mock(CheckFactory.class);
     when(checkFactory.create(Mockito.anyString())).thenReturn(checks);
-    List<Object> checksList = Arrays.asList(new Object[] {realStringDisallowedMultiFileCheck});
+    List<Object> checksList = Arrays.asList(new Object[] {realIfOneStringExistsBothMustExistMultiFileCheck});
     when(checks.all()).thenReturn(checksList);
 
     when(checks.ruleKey(Mockito.isA(StringDisallowedIfMatchInAnotherFileCheck.class))).thenReturn(RuleKey.of("text", "StringDisallowedIfMatchInAnotherFileCheck"));
+    when(checks.ruleKey(Mockito.isA(MultiFileIfOneStringExistsThenBothMustExistCheck.class))).thenReturn(RuleKey.of("text", "MultiFileIfOneStringExistsThenBothMustExistCheck"));
 //    realStringDisallowedMultiFileCheck.setRuleKey(RuleKey.parse("text:StringDisallowedIfMatchInAnotherFileCheck")); // Not strictly necessary here. Normally set by the framework to the value in the Check class's annotation
 
     when(checks.addAnnotatedChecks(Mockito.anyCollection())).thenReturn(checks);

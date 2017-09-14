@@ -13,7 +13,6 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
   @Override
   public void validate(final TextSourceFile sourceFile, final String projectKey) {
     throw new UnsupportedOperationException("This is a cross-file check so you must use the form of the 'validate' method that provides a data structure to store the preliminary results.");
-
   }
 
   // Later will be moved to a new parent abstract class used by cross-file checks
@@ -44,14 +43,7 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
                        String projectKey
                       );
 
-  /**
-   * After the first "labelling" pass analyze the files that were flagged to determine which need an issue raised for the current check
-   * @param
-   * @return
-   */
-  public List<TextSourceFile> raiseIssuesAfterScan() {
-    List<TextSourceFile> textSourceFiles = new LinkedList<TextSourceFile>();
-
+  private boolean isRuleTriggerPresent() {
     boolean ruleTriggered = false;
     for (Entry<InputFile, List<CrossFileScanPrelimIssue>> currentInputFileEntry : crossFileChecksRawResults.entrySet()) {
       List<CrossFileScanPrelimIssue> prelimIssues = currentInputFileEntry.getValue();
@@ -64,26 +56,27 @@ public abstract class AbstractCrossFileCheck extends AbstractTextCheck {
       }
     }
 
-    if (ruleTriggered) {
-      for (Entry<InputFile, List<CrossFileScanPrelimIssue>> currentInputFileEntry : crossFileChecksRawResults.entrySet()) {
-        List<CrossFileScanPrelimIssue> prelimIssues = currentInputFileEntry.getValue();
-        setTextSourceFile(new TextSourceFile(currentInputFileEntry.getKey()));
+    return ruleTriggered;
+  }
 
-        for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
-          if (RulePart.DisallowPattern == currentPrelimIssue.getRulePart() && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
-//            System.out.println("Raising issue on: " + currentPrelimIssue);
-            createViolation(currentPrelimIssue.getLine(), currentPrelimIssue.getMessage());
-          }
-        }
+  /**
+   * After the first "labelling" pass analyze the files that were flagged to determine which need an issue raised for the current check
+   * @param
+   * @return
+   */
+  public List<TextSourceFile> raiseIssuesAfterScan() {
+    List<TextSourceFile> textSourceFiles = new LinkedList<TextSourceFile>();
 
-        textSourceFiles.add(getTextSourceFile());
-      }
+    if (isRuleTriggerPresent()) {
+      raiseAppropriateViolationsAgainstSourceFiles(textSourceFiles);
     }
     return textSourceFiles;
   }
 
+  abstract protected void raiseAppropriateViolationsAgainstSourceFiles(List<TextSourceFile> sourceFiles);
+
   enum RulePart {
-    TriggerPattern("TriggerPattern"), DisallowPattern("DisallowPattern");
+    TriggerPattern("TriggerPattern"), DisallowPattern("DisallowPattern"), MustAlsoExistPattern("MustAlsoExistPattern");
     String value;
 
     RulePart(final String value) {

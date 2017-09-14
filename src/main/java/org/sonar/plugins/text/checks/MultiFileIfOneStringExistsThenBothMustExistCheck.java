@@ -1,6 +1,5 @@
 package org.sonar.plugins.text.checks;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
@@ -23,12 +22,12 @@ import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
 import org.sonar.squidbridge.annotations.RuleTemplate;
 
-@Rule(key = "StringDisallowedIfMatchInAnotherFileCheck",
+@Rule(key = "MultiFileIfOneStringExistsThenBothMustExistCheck",
       priority = Priority.MAJOR,
-      name = "String disallowed if a match was found in another file", description = "Checks for a 'trigger match' in one file. Only if that is present a second expression is checked against all files in the project and all matches cause an issue to be raised. Regex is applied in simple non-DOTALL mode / is single-line-based.")
+      name = "If a string is present then another string must also be present (cross-file)", description = "Checks for a 'trigger match' in one file. Only if that is present a second expression is checked against a defined set of files. If that other expression is not present in the project the triggering line of code will have an issue raised against it. Regex is applied in simple non-DOTALL mode / is single-line-based.")
 @RuleTemplate
-public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFileCheck {
-  private static final Logger LOG = LoggerFactory.getLogger(StringDisallowedIfMatchInAnotherFileCheck.class);
+public class MultiFileIfOneStringExistsThenBothMustExistCheck extends AbstractCrossFileCheck {
+  private static final Logger LOG = LoggerFactory.getLogger(MultiFileIfOneStringExistsThenBothMustExistCheck.class);
   protected static final int MAX_CHARACTERS_SCANNED = 500001;
 
   @RuleProperty(key = "triggerExpression", type = "TEXT", defaultValue = "^some single-line.*regex search string$")
@@ -37,17 +36,16 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
   @RuleProperty(key = "triggerFilePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
   private String triggerFilePattern;
 
-  @RuleProperty(key = "disallowExpression", type = "TEXT", defaultValue = "^some single-line.*regex search string$")
-  private String disallowExpression;
+  @RuleProperty(key = "mustAlsoExistExpression", type = "TEXT", defaultValue = "^some single-line.*regex search string$")
+  private String mustAlsoExistExpression;
 
-  @RuleProperty(key = "disallowFilePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
-  private String disallowFilePattern;
+  @RuleProperty(key = "mustAlsoExistFilePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
+  private String mustAlsoExistFilePattern;
 
-  @RuleProperty(type = "BOOLEAN", key = "applyExpressionToOneLineOfTextAtATime", defaultValue = "true", description = "Select this to feed the regular expression evaluator one line at a time. Uncheck it if your expression needs to 'see' multiple lines. When not checked only the first " + (MAX_CHARACTERS_SCANNED-1) + " characters of each file will be processed. Since: v0.8. Rules created from this template under pre-v0.8 plugin versions won't show this option and will default to 'true'.")
+  @RuleProperty(type = "BOOLEAN", key = "applyExpressionToOneLineOfTextAtATime", defaultValue = "true", description = "Select this to feed the regular expression evaluator one line at a time. Uncheck it if your expression needs to 'see' multiple lines. When not checked only the first " + (MAX_CHARACTERS_SCANNED-1) + " characters of each file will be processed.")
   private boolean applyExpressionToOneLineOfTextAtATime = true;
 
-  @RuleProperty(
-    key = "message")
+  @RuleProperty(key = "message")
   private String message;
 
   @Override
@@ -60,34 +58,37 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     LOG.debug("Current file: {}", textSourceFile.getInputFile().absolutePath());
     LOG.debug("validating");
 
-    if (triggerExpression != null &&
-        isFileIncluded(triggerFilePattern) &&
-        shouldFireForProject(projectKey) &&
-        shouldFireOnFile(textSourceFile.getInputFile())
-        ) {
+    if (shouldFireForProject(projectKey) &&
+        shouldFireOnFile(textSourceFile.getInputFile())) {
+      recordMatches(textSourceFile, RulePart.TriggerPattern);
+      recordMatches(textSourceFile, RulePart.MustAlsoExistPattern);
+    }
+  }
+
+  private void recordMatches(final TextSourceFile textSourceFile, final RulePart rulePart) {
+    final String regularExpression;
+    final String fileMatchPattern;
+
+    if (RulePart.TriggerPattern.equals(rulePart)) {
+      regularExpression = triggerExpression;
+      fileMatchPattern = triggerFilePattern;
+    } else {
+      regularExpression = mustAlsoExistExpression;
+      fileMatchPattern = mustAlsoExistFilePattern;
+    }
+
+    if (regularExpression != null && isFileIncluded(fileMatchPattern)) {
       LOG.debug("Checking file: {}", textSourceFile.getInputFile().absolutePath());
 
       if (applyExpressionToOneLineOfTextAtATime) {
-        recordMatchesOneLineAtATime(textSourceFile, triggerExpression, RulePart.TriggerPattern);
+        recordMatchesOneLineAtATime(textSourceFile, regularExpression, rulePart);
       } else {
-        recordMatchesUsingDOTALLFriendlyApproach(textSourceFile, triggerExpression, RulePart.TriggerPattern);
+        recordMatchesUsingDOTALLFriendlyApproach(textSourceFile, regularExpression, rulePart);
       }
     } else {
-      LOG.debug("Did not check file '{}' for trigger because it looked like a file that I shouldn't process.", textSourceFile.getInputFile().absolutePath());
+      LOG.debug("Did not check file '{}' for " + rulePart + " because it looked like a file that I shouldn't process.", textSourceFile.getInputFile().absolutePath());
     }
 
-    if (disallowExpression != null &&
-        isFileIncluded(disallowFilePattern) &&
-        shouldFireForProject(projectKey) &&
-        shouldFireOnFile(textSourceFile.getInputFile())
-        ) {
-
-      if (applyExpressionToOneLineOfTextAtATime) {
-        recordMatchesOneLineAtATime(textSourceFile, disallowExpression, RulePart.DisallowPattern);
-      } else {
-        recordMatchesUsingDOTALLFriendlyApproach(textSourceFile, disallowExpression, RulePart.DisallowPattern);
-      }
-    }
   }
 
   private void recordMatchesOneLineAtATime(final TextSourceFile textSourceFile, final String regularExpression, final RulePart recordMatchAsRulePart) {
@@ -96,17 +97,16 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
 
     Path path = textSourceFile.getInputFile().file().toPath();
     try (
-        BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
-        LineNumberReader lineReader = new LineNumberReader(reader);
+        LineNumberReader lineReader = new LineNumberReader(Files.newBufferedReader(path, StandardCharsets.UTF_8));
         ) {
-      String line = null;
+          String line = null;
           while ((line = lineReader.readLine()) != null) {
             matcher.reset(line); //reset the input
             if (matcher.find()) {
-              LOG.debug("{} match found: '{}' on line {} of file '{}'.", new Object[]{recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().file().toPath()});
+              LOG.debug("{} match found: '{}' on line {} of file '{}'.", recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().file().toPath());
               recordMatch(recordMatchAsRulePart, lineReader.getLineNumber(), message);
+            }
           }
-        }
       }
       catch (IOException ex){
         throw new RuntimeException(ex);
@@ -131,7 +131,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     if (matcher.find()) {
       int positionOfMatch = matcher.start();
       lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatch);
-      LOG.debug("{} match found: on line {} of file '{}'.", new Object[]{recordMatchAsRulePart.toString(), message, lineNumberOfTriggerMatch, textSourceFile.getInputFile().file().toPath()});
+      LOG.debug("{} match found: on line {} of file '{}'.", recordMatchAsRulePart.toString(), message, lineNumberOfTriggerMatch, textSourceFile.getInputFile().file().toPath());
       recordMatch(recordMatchAsRulePart, lineNumberOfTriggerMatch, message);
     }
 
@@ -161,20 +161,20 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     this.message = message;
   }
 
-  public String getDisallowExpression() {
-    return disallowExpression;
+  public String getMustAlsoExistExpression() {
+    return mustAlsoExistExpression;
   }
 
-  public void setDisallowExpression(final String disallowExpression) {
-    this.disallowExpression = disallowExpression;
+  public void setMustAlsoExistExpression(final String disallowExpression) {
+    this.mustAlsoExistExpression = disallowExpression;
   }
 
-  public String getDisallowFilePattern() {
-    return disallowFilePattern;
+  public String getMustAlsoExistFilePattern() {
+    return mustAlsoExistFilePattern;
   }
 
-  public void setDisallowFilePattern(final String disallowFilePattern) {
-    this.disallowFilePattern = disallowFilePattern;
+  public void setMustAlsoExistFilePattern(final String disallowFilePattern) {
+    this.mustAlsoExistFilePattern = disallowFilePattern;
   }
 
   protected Boolean getApplyExpressionToOneLineOfTextAtATime() {
@@ -187,21 +187,34 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
 
   @Override
   protected void raiseAppropriateViolationsAgainstSourceFiles(final List<TextSourceFile> sourceFiles) {
+    boolean occurrenceFound = false;
+
     for (Entry<InputFile, List<CrossFileScanPrelimIssue>> currentInputFileEntry : crossFileChecksRawResults.entrySet()) {
       List<CrossFileScanPrelimIssue> prelimIssues = currentInputFileEntry.getValue();
       setTextSourceFile(new TextSourceFile(currentInputFileEntry.getKey()));
 
       for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
-        if (RulePart.DisallowPattern == currentPrelimIssue.getRulePart()
-              && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
+        if (RulePart.MustAlsoExistPattern == currentPrelimIssue.getRulePart()
+            && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
           // System.out.println("Raising issue on: " + currentPrelimIssue);
-          createViolation(currentPrelimIssue.getLine(), currentPrelimIssue.getMessage());
+          occurrenceFound = true;
+          break;
         }
       }
 
-      sourceFiles.add(getTextSourceFile());
+      if (!occurrenceFound) {
+        for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
+          if (RulePart.TriggerPattern == currentPrelimIssue.getRulePart()
+              && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
+            createViolation(currentPrelimIssue.getLine(), currentPrelimIssue.getMessage());
+          }
+        }
+        sourceFiles.add(getTextSourceFile());
+      }
+
     }
 
   }
+
 
 }

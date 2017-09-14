@@ -54,7 +54,7 @@ public abstract class AbstractTextCheck {
     this.ruleKey = ruleKey;
   }
 
-  public final RuleKey getRuleKey() {
+  public RuleKey getRuleKey() {
     return this.ruleKey;
   }
 

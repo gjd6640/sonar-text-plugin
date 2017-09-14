@@ -21,7 +21,6 @@ import org.sonar.plugins.text.checks.CrossFileScanPrelimIssue;
 import org.sonar.plugins.text.checks.TextIssue;
 import org.sonar.plugins.text.checks.TextSourceFile;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 
 public class TextIssueSensor implements Sensor {
@@ -69,10 +68,10 @@ public class TextIssueSensor implements Sensor {
   }
 
   private void analyseIndividualFile(final InputFile inputFile) {
-    try {
-      TextSourceFile textSourceFile = new TextSourceFile(inputFile);
+    TextSourceFile textSourceFile = new TextSourceFile(inputFile);
 
-      for (Object check : checks.all()) {
+    for (Object check : checks.all()) {
+      try {
         if (check instanceof AbstractCrossFileCheck) {
           // Calls to cross-file checks need to pass in the data structure used to collect match data
           AbstractCrossFileCheck crossFileCheck = (AbstractCrossFileCheck) check;
@@ -83,12 +82,15 @@ public class TextIssueSensor implements Sensor {
           textCheck.setRuleKey(checks.ruleKey(check));
           textCheck.validate(textSourceFile, project.getKey());
         }
+      } catch (Exception e) {
+        LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.file().getAbsolutePath());
+        LOG.warn("Brief failure cause info: " + e.toString());
+        LOG.warn("Full failure details can be exposed by enabling debug logging on 'org.sonar.plugins.text.batch.TextIssueSensor'.");
+        LOG.debug("Check failure details:", e);
       }
-      saveIssue(textSourceFile);
-
-    } catch (Exception e) {
-      LOG.error("Could not analyze the file {}", inputFile.file().getAbsolutePath(), e);
     }
+
+    saveIssues(textSourceFile.getTextIssues(), textSourceFile.getInputFile());
   }
 
   private void raiseCrossFileCheckIssues() {
@@ -97,16 +99,15 @@ public class TextIssueSensor implements Sensor {
         List<TextSourceFile> textSourceFiles = ((AbstractCrossFileCheck) check).raiseIssuesAfterScan();
 
         for (TextSourceFile file : textSourceFiles) {
-          saveIssue(file);
+          saveIssues(file.getTextIssues(), file.getInputFile());
         }
       }
     }
   }
 
-  @VisibleForTesting
-  protected void saveIssue(final TextSourceFile source) {
-    for (TextIssue issue : source.getTextIssues()) {
-      Issuable issuable = resourcePerspectives.as(Issuable.class, source.getInputFile());
+  private void saveIssues(final List<TextIssue> issuesList, final InputFile againstThisFile) {
+    for (TextIssue issue : issuesList) {
+      Issuable issuable = resourcePerspectives.as(Issuable.class, againstThisFile);
 
       if (issuable != null) {
         issuable.addIssue(

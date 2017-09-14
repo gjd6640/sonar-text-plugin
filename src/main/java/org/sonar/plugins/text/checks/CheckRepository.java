@@ -18,7 +18,8 @@ public class CheckRepository {
         new SimpleTextMatchCheck(),
         new RequiredStringNotPresentCheck(),
         new MultilineTextMatchCheck(),
-        new StringDisallowedIfMatchInAnotherFileCheck()
+        new StringDisallowedIfMatchInAnotherFileCheck(),
+        new MultiFileIfOneStringExistsThenBothMustExistCheck()
       );
   }
 
