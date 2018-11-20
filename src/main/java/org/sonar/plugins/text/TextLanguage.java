@@ -3,7 +3,7 @@ package org.sonar.plugins.text;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.Configuration;
 import org.sonar.api.resources.AbstractLanguage;
 
 import com.google.common.collect.Lists;
@@ -16,9 +16,9 @@ public class TextLanguage extends AbstractLanguage {
 
   private static final String TEXT_LANGUAGE_NAME = "text";
 
-  private final Settings settings;
+  private final Configuration settings;
 
-  public TextLanguage(final Settings settings) {
+  public TextLanguage(final Configuration settings) {
     super(LANGUAGE_KEY, TEXT_LANGUAGE_NAME);
     this.settings = settings;
   }

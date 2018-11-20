@@ -12,8 +12,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <sonar.buildVersion>4.5.2</sonar.buildVersion>
-    <jdk.min.version>1.7</jdk.min.version>
+    <sonar.buildVersion>7.4</sonar.buildVersion>
+    <jdk.min.version>1.8</jdk.min.version>
   </properties>
 
   <dependencies>
@@ -23,6 +23,11 @@
       <version>1.7.10</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>27.0-jre</version>
+	</dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -50,11 +55,14 @@
   	      <artifactId>sslr-xpath</artifactId>
   	      <groupId>org.codehaus.sonar.sslr</groupId>
   	    </exclusion>
+  	    <exclusion>
+  	    	<artifactId>sonar-plugin-api</artifactId>
+  	    	<groupId>org.codehaus.sonar</groupId>
+  	    </exclusion>
   	  </exclusions>
     </dependency>
-  
     <dependency>
-      <groupId>org.codehaus.sonar</groupId>
+      <groupId>org.sonarsource.sonarqube</groupId>
       <artifactId>sonar-plugin-api</artifactId>
       <version>${sonar.buildVersion}</version>
       <scope>provided</scope>
@@ -78,7 +86,7 @@
     <dependency>
       <groupId>org.codehaus.sonar</groupId>
       <artifactId>sonar-testing-harness</artifactId>
-      <version>${sonar.buildVersion}</version>
+      <version>5.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
