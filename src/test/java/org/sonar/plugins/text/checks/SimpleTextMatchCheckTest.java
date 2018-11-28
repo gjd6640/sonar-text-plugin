@@ -4,6 +4,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.Test;
@@ -32,15 +35,19 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 	@Test
   public void simpleCase_ignoresCharactersNotInCharset() throws IOException {
     // Set up
+//    DefaultFileSystem fs = super.createFileSystem();
+//    String sep = File.separator;
+
+    Path dummyJSContentPath = Paths.get("src", "test", "resources", "invalidCharacterBytes.js");
+
     super.createFileSystem();
-    String sep = File.separator;
-    File jsFile = new File("src" + sep + "test" + sep + "resources" + sep + "invalidCharacterBytes.js");
+    File tempFile1 = super.createTempFile(new String(Files.readAllBytes(dummyJSContentPath)));
 
     SimpleTextMatchCheck check = new SimpleTextMatchCheck();
     check.setExpression(".*(ts_sort_numeric|ts_sort_datetime).*");
 
     // Run
-    TextSourceFile result = parseAndCheck(jsFile, check, "com.mycorp.projectA.service:service-do-X");
+    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
 
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();

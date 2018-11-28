@@ -14,15 +14,15 @@ public class TextLanguageTest {
 
   @Test
   public void verifyDefaultFileSuffixes() {
-	  
+
 	  TextLanguage t = new TextLanguage(createMockConfig());
-	  
+
 	  String[] fileSuffixes = t.getFileSuffixes();
 	  System.out.println(Arrays.toString(fileSuffixes));
 	  assertTrue(".properties".equals(fileSuffixes[0]));
 	  assertTrue(".txt".equals(fileSuffixes[1]));
   }
-  
+
   private Configuration createMockConfig() {
     return new Configuration() {
 
@@ -45,5 +45,5 @@ public class TextLanguageTest {
       }
     };
   }
-  
+
 }

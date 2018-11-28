@@ -2,7 +2,6 @@ package org.sonar.plugins.text.checks;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -20,19 +19,19 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Matchers;
+import org.sonar.api.batch.bootstrap.ProjectDefinition;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
-import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.fs.internal.DefaultInputModule;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.issue.Issue;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.batch.TextIssueSensor;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck.RulePart;
+import org.sonar.plugins.text.utils.InputFileUtil;
 
 public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCrossFileCheckTester {
 
@@ -43,7 +42,7 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
   @Before
   public void setUp() throws Exception {
 //    project = new Project("com.mycorp.projectA.service:service-do-X");
-    fs = new DefaultFileSystem(new File("tmp/"));
+    //fs = new DefaultFileSystem(new File("tmp/"));
   }
 
   // Code originally borrowed from IssueSensorTest...
@@ -51,10 +50,12 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
   @Test
   public void analyse_multi_class_integration_test() throws IOException {
       // Setup
+      fs = super.createFileSystem();
 
       // Create files to be scanned
       // File containing trigger pattern
-      DefaultInputFile inputFile = createInputFile("effective-pom.xml", TextLanguage.LANGUAGE_KEY);
+      File tempFile1 = super.createTempFile("effective-pom.xml", "");
+      DefaultInputFile inputFile = InputFileUtil.createInputFile(tempFile1.getPath(), TextLanguage.LANGUAGE_KEY);
       fs.add(inputFile);
       List<String> lines = Arrays.asList("The first line", "<target>1.8</target>", "The third line");
       Path file = Paths.get(inputFile.file().getAbsolutePath());
@@ -62,7 +63,8 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       Files.write(file, lines, Charset.forName("UTF-8"));
 
       // File with disallowed config
-      inputFile = createInputFile("feature-setup-env.properties", TextLanguage.LANGUAGE_KEY);
+      tempFile1 = super.createTempFile("feature-setup-env.properties", "");
+      inputFile = InputFileUtil.createInputFile(tempFile1.getPath(), TextLanguage.LANGUAGE_KEY);
       fs.add(inputFile);
       lines = Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line");
       file = Paths.get(inputFile.file().getAbsolutePath());
@@ -79,20 +81,22 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 
     // Run
-      SensorContextTester localSensorContextTester = SensorContextTester.create(Paths.get("tmp/"));
-      sensor.execute(localSensorContextTester);
+//      SensorContextTester localSensorContextTester = SensorContextTester.create(Paths.get("tmp/"));
+      sensor.execute(super.getSensorContextTester());
 
     // Verify
-      assertTrue(localSensorContextTester.allIssues().size() == 1);
+      assertTrue(super.getSensorContextTester().allIssues().size() == 1);
   }
 
   @Test
   public void analyse_multi_class_integration_test_multiline_aka_DOTALL_regex() throws IOException {
       // Setup
+      fs = super.createFileSystem();
 
       // Create files to be scanned
       // File containing trigger pattern
-      DefaultInputFile inputFile = createInputFile("effective-pom.xml", TextLanguage.LANGUAGE_KEY);
+      File tempFile1 = super.createTempFile("effective-pom.xml", "");
+      DefaultInputFile inputFile = InputFileUtil.createInputFile(tempFile1.getPath(), TextLanguage.LANGUAGE_KEY);
       fs.add(inputFile);
       List<String> lines = Arrays.asList("The first line", "<target>1.8</target>", "The third line");
       Path file = Paths.get(inputFile.file().getAbsolutePath());
@@ -100,7 +104,8 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
       Files.write(file, lines, Charset.forName("UTF-8"));
 
       // File with disallowed config
-      inputFile = createInputFile("feature-setup-env.properties", TextLanguage.LANGUAGE_KEY);
+      tempFile1 = super.createTempFile("feature-setup-env.properties", "");
+      inputFile = InputFileUtil.createInputFile(tempFile1.getPath(), TextLanguage.LANGUAGE_KEY);
       fs.add(inputFile);
       lines = Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line");
       file = Paths.get(inputFile.file().getAbsolutePath());
@@ -116,45 +121,47 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
 
       realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 
+
     // Run
-      SensorContextTester localSensorContextTester = SensorContextTester.create(Paths.get("tmp/"));
-      sensor.execute(localSensorContextTester);
+      sensor.execute(super.getSensorContextTester());
 
     // Verify
-      assertTrue(localSensorContextTester.allIssues().size() == 1);
+      assertTrue(super.getSensorContextTester().allIssues().size() == 1);
   }
 
   @Test
   public void recordMatchTest(){
     // Set up
+    fs = super.createFileSystem(); // Not used in this method
     StringDisallowedIfMatchInAnotherFileCheck chk = new StringDisallowedIfMatchInAnotherFileCheck();
     Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
     chk.setCrossFileChecksRawResults(rawResults);
 
     // Execute
     chk.setRuleKey(RuleKey.of("text","rule1"));
-    chk.setTextSourceFile(new TextSourceFile(createInputFile("somepath")));
+    chk.setTextSourceFile(new TextSourceFile(InputFileUtil.createInputFile("somepath")));
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     chk.setRuleKey(RuleKey.of("text","rule2"));
-    chk.setTextSourceFile(new TextSourceFile(createInputFile("someOtherPath")));
+    chk.setTextSourceFile(new TextSourceFile(InputFileUtil.createInputFile("someOtherPath")));
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     // Verify
     Assert.assertTrue(rawResults.size() == 2);
     //List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.values().iterator().next();
-    List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.get(createInputFile("somepath"));
+    List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.get(InputFileUtil.createInputFile("somepath"));
     Assert.assertTrue(issuesForOneFile.size() == 2);
 
-    issuesForOneFile = rawResults.get(createInputFile("someOtherPath"));
+    issuesForOneFile = rawResults.get(InputFileUtil.createInputFile("someOtherPath"));
     Assert.assertTrue(issuesForOneFile.size() == 2);
   }
 
   @Test
   public void raiseIssuesAfterScanTest() {
     // Set up
+    fs = super.createFileSystem(); // Not used in this method
     StringDisallowedIfMatchInAnotherFileCheck chk = new StringDisallowedIfMatchInAnotherFileCheck();
     Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
 
@@ -163,7 +170,7 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.TriggerPattern, RuleKey.of("text","rule1"), 1, "msg"));
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule1"), 1, "msg"));
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.DisallowPattern, RuleKey.of("text","rule2"), 1, "msg"));  // not triggered, should not raise an issue
-    rawResults.put(createInputFile("file1"), issuesForOneFile);
+    rawResults.put(InputFileUtil.createInputFile("file1"), issuesForOneFile);
 
     // Execute
     chk.setRuleKey(RuleKey.of("text","rule1"));
@@ -178,19 +185,25 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
 
   }
 
-  private DefaultInputFile createInputFile(final String name) {
-    return new TestInputFileBuilder("blahModuleKey", name)
-        .setModuleBaseDir(Paths.get("."))
-        .setType(InputFile.Type.MAIN)
-        .build();  
-  }
+  @Before
+  public void createIssueSensorBackedByMocks() throws IOException {
+    Checks<Object> checks = mock(Checks.class);
+    CheckFactory checkFactory = mock(CheckFactory.class);
+    when(checkFactory.create(Matchers.anyString())).thenReturn(checks);
 
-  private DefaultInputFile createInputFile(final String name, final String language) {
-    return new TestInputFileBuilder("blahModuleKey", name)
-        .setModuleBaseDir(Paths.get("."))
-        .setLanguage(language)
-        .setType(InputFile.Type.MAIN)
-        .build();  
-  }
+//    Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
+    //realStringDisallowedMultiFileCheck.setCrossFileChecksRawResults(rawResults);
 
+    List<Object> checksList = Arrays.asList(new Object[] {realStringDisallowedMultiFileCheck});
+    when(checks.all()).thenReturn(checksList);
+
+    when(checks.ruleKey(Matchers.isA(StringDisallowedIfMatchInAnotherFileCheck.class))).thenReturn(RuleKey.of("text", "StringDisallowedIfMatchInAnotherFileCheck"));
+    when(checks.ruleKey(Matchers.isA(MultiFileIfOneStringExistsThenBothMustExistCheck.class))).thenReturn(RuleKey.of("text", "MultiFileIfOneStringExistsThenBothMustExistCheck"));
+//    realStringDisallowedMultiFileCheck.setRuleKey(RuleKey.parse("text:StringDisallowedIfMatchInAnotherFileCheck")); // Not strictly necessary here. Normally set by the framework to the value in the Check class's annotation
+
+    when(checks.addAnnotatedChecks(Matchers.anyCollection())).thenReturn(checks);
+    File workarea = temporaryFolder.newFolder("MFIOETBMECT");
+    DefaultInputModule project = new DefaultInputModule(ProjectDefinition.create().setKey("com.mycorp.projectA.service:service-do-X").setBaseDir(workarea).setWorkDir(workarea));
+    sensor = new TextIssueSensor(checkFactory, project);
+  }
 }
