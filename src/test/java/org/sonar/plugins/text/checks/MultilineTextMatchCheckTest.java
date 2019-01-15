@@ -1,5 +1,6 @@
 package org.sonar.plugins.text.checks;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -66,6 +67,33 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
     assertTrue("Found " + issuesFound.size() + " issues", issuesFound.size() == 1);
     
     assertTrue(countTextIssuesFoundAtLine(3, issuesFound) == 1);
+  }
+
+  @Test
+  public void userSuppliedChallenge_shouldMatchJustOnce() throws IOException {
+    // Set up
+    super.createFileSystem();
+    String searchThis = "if blah\r\n" +
+        "then\r\n" +
+        " EXIT SCRIPT\r\n" +
+        "else\r\n" +
+        " blah\r\n" +
+        "yep\r\n" +
+        "no\r\n" +
+        "asdf\r\n" +
+        "EXIT SCRIPT";
+    File tempFile1 = super.createTempFile(searchThis);
+    MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setSearchRegularExpression("(?i)EXIT\\s+SCRIPT\\s*\\n*(?=[\\w])");
+
+    // Run
+    TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
+
+    // Check
+    List<TextIssue> issuesFound = result.getTextIssues();
+    assertEquals(1, issuesFound.size());
+
+    assertTrue("Hey, issuesFound was " + issuesFound, countTextIssuesFoundAtLine(3, issuesFound) == 1);
   }
 
   @Test
