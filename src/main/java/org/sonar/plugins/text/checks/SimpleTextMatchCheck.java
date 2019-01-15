@@ -21,12 +21,12 @@ import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "SimpleRegexMatchCheck",
       priority = Priority.MAJOR,
-      name = "Simple Regex Match", description = "Simple regular expression matcher")
+      name = "Simple Regex Match", description = "Simple regular expression matcher.")
 @RuleTemplate
 public class SimpleTextMatchCheck extends AbstractTextCheck {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTextCheck.class);
 
-  @RuleProperty(key = "expression", type = "TEXT", defaultValue = "^some single-line.*regex search string$")
+  @RuleProperty(key = "expression", type = "TEXT", defaultValue = "^some single-line.*regex search string$", description = "Don't try to match to newlines (\\r or \\n); consider using the Multiline check type if you have that need. This rule type evaluates your pattern against a single line of text at a time and uses java.io.LineNumberReader.readLine() to obtain that text. That method consumes new line information but does not return it.")
   private String expression;
 
   @RuleProperty(key = "filePattern", defaultValue = "**/*.properties", description = "Ant Style path expression. To include all of the files in this project use '**/*'. \n\nFiles scanned will be limited by the list of file extensions configured for this language AND by the values of 'sonar.sources' and 'sonar.exclusions'. Also, using just 'filename.txt' here to point the rule to a file at the root of the project does not appear to work (as of SQ v4.5.5). Use '**/filename.txt' instead.")
