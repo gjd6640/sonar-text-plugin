@@ -5,15 +5,15 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.Sensor;
-import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.issue.internal.DefaultIssueLocation;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.InputModule;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.component.ResourcePerspectives;
-import org.sonar.api.issue.Issuable;
-import org.sonar.api.resources.Project;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck;
 import org.sonar.plugins.text.checks.AbstractTextCheck;
 import org.sonar.plugins.text.checks.CheckRepository;
@@ -27,18 +27,18 @@ public class TextIssueSensor implements Sensor {
   private final Logger LOG = LoggerFactory.getLogger(TextIssueSensor.class);
 
   private final Checks<Object> checks;
-  private final FileSystem fs;
-  private final ResourcePerspectives resourcePerspectives;
-  private final Project project;
+//  private final FileSystem fs;
+//  private final ResourcePerspectives resourcePerspectives;
+  private final InputModule project;
   final Map<InputFile, List<CrossFileScanPrelimIssue>> crossFileChecksRawResults;
 
   /**
    * Use of IoC to get FileSystem
    */
-  public TextIssueSensor(final FileSystem fs, final ResourcePerspectives perspectives, final CheckFactory checkFactory, final Project project) {
+  public TextIssueSensor(final CheckFactory checkFactory, final InputModule project) {
     this.checks = checkFactory.create(CheckRepository.REPOSITORY_KEY).addAnnotatedChecks(CheckRepository.getCheckClasses());
-    this.fs = fs;
-    this.resourcePerspectives = perspectives;
+//    this.fs = fs;
+//    this.resourcePerspectives = perspectives;
     this.project = project;
 
     // This data structure is shared across all cross-file checks so they can see each others' data.
@@ -51,23 +51,22 @@ public class TextIssueSensor implements Sensor {
    *
    * Consider in future versions: Will all users want this behavior? This plugin now scans files from other languages when the rule's ant-style file path pattern directs it to...
    */
-  @Override
-  public boolean shouldExecuteOnProject(final Project project) {
+/*
+  private boolean shouldExecuteOnProject(final InputModule project) {
     return fs.hasFiles(fs.predicates().hasLanguage("text"));
   }
-
+*/
   @Override
-  public void analyse(final Project project, final SensorContext sensorContext) {
-
+  public void execute(final SensorContext sensorContext) {
+    FileSystem fs = sensorContext.fileSystem();
     for (InputFile inputFile : fs.inputFiles(fs.predicates().hasType(InputFile.Type.MAIN))) {
-      analyseIndividualFile(inputFile);
+      analyseIndividualFile(inputFile, sensorContext);
     }
 
-    raiseCrossFileCheckIssues();
-
+    raiseCrossFileCheckIssues(sensorContext);
   }
 
-  private void analyseIndividualFile(final InputFile inputFile) {
+  private void analyseIndividualFile(final InputFile inputFile, SensorContext sensorContext) {
     TextSourceFile textSourceFile = new TextSourceFile(inputFile);
 
     for (Object check : checks.all()) {
@@ -76,11 +75,11 @@ public class TextIssueSensor implements Sensor {
           // Calls to cross-file checks need to pass in the data structure used to collect match data
           AbstractCrossFileCheck crossFileCheck = (AbstractCrossFileCheck) check;
           crossFileCheck.setRuleKey(checks.ruleKey(check));
-          crossFileCheck.validate(crossFileChecksRawResults, textSourceFile, project.getKey());
+          crossFileCheck.validate(crossFileChecksRawResults, textSourceFile, project.key());
         } else {
           AbstractTextCheck textCheck = (AbstractTextCheck) check;
           textCheck.setRuleKey(checks.ruleKey(check));
-          textCheck.validate(textSourceFile, project.getKey());
+          textCheck.validate(textSourceFile, project.key());
         }
       } catch (Exception e) {
         LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.file().getAbsolutePath());
@@ -90,34 +89,33 @@ public class TextIssueSensor implements Sensor {
       }
     }
 
-    saveIssues(textSourceFile.getTextIssues(), textSourceFile.getInputFile());
+    saveIssues(textSourceFile.getTextIssues(), textSourceFile.getInputFile(), sensorContext);
   }
 
-  private void raiseCrossFileCheckIssues() {
+  private void raiseCrossFileCheckIssues(SensorContext sensorContext) {
     for (Object check : checks.all()) {
       if (check instanceof AbstractCrossFileCheck) {
         List<TextSourceFile> textSourceFiles = ((AbstractCrossFileCheck) check).raiseIssuesAfterScan();
 
         for (TextSourceFile file : textSourceFiles) {
-          saveIssues(file.getTextIssues(), file.getInputFile());
+          saveIssues(file.getTextIssues(), file.getInputFile(), sensorContext);
         }
       }
     }
   }
 
-  private void saveIssues(final List<TextIssue> issuesList, final InputFile againstThisFile) {
+  private void saveIssues(final List<TextIssue> issuesList, final InputFile againstThisFile, SensorContext sensorContext) {
     for (TextIssue issue : issuesList) {
-      Issuable issuable = resourcePerspectives.as(Issuable.class, againstThisFile);
-
-      if (issuable != null) {
-        issuable.addIssue(
-          issuable.newIssueBuilder()
-            .ruleKey(issue.getRuleKey())
-            .line(issue.getLine())
-            .message(issue.getMessage())
-            .build());
-      }
+      sensorContext.newIssue()
+          .at(new DefaultIssueLocation().on(againstThisFile).at(againstThisFile.selectLine(issue.getLine())))
+          .forRule(issue.getRuleKey())
+          .save();
     }
+  }
+
+  @Override
+  public void describe(SensorDescriptor descriptor) {
+    descriptor.name("TextIssueSensor");
   }
 
 }
