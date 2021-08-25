@@ -8,7 +8,7 @@ import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.sonar.api.config.Configuration;
 import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.TextPlugin;
