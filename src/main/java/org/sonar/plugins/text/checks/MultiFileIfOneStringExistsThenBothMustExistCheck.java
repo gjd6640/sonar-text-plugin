@@ -20,12 +20,10 @@ import org.sonar.check.RuleProperty;
 import org.sonar.plugins.text.checks.util.FileIOUtil;
 import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
-import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "MultiFileIfOneStringExistsThenBothMustExistCheck",
       priority = Priority.MAJOR,
       name = "If a string is present then another string must also be present (cross-file)", description = "Checks for a 'trigger match' in one file. Only if that is present a second expression is checked against a defined set of files. If that other expression is not present in the project the triggering line of code will have an issue raised against it. Regex is applied in simple non-DOTALL mode / is single-line-based.")
-@RuleTemplate
 public class MultiFileIfOneStringExistsThenBothMustExistCheck extends AbstractCrossFileCheck {
   private static final Logger LOG = LoggerFactory.getLogger(MultiFileIfOneStringExistsThenBothMustExistCheck.class);
   protected static final int MAX_CHARACTERS_SCANNED = 500001;

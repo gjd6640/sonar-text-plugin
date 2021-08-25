@@ -1,63 +1,61 @@
 package org.sonar.plugins.text.batch;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.Sensor;
-import org.sonar.api.batch.SensorContext;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.component.ResourcePerspectives;
-import org.sonar.api.issue.Issuable;
-import org.sonar.api.resources.Project;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.issue.NewIssue;
+import org.sonar.api.batch.sensor.issue.NewIssueLocation;
+import org.sonar.api.scanner.fs.InputProject;
+import org.sonar.plugins.text.TextRulesDefinition;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck;
 import org.sonar.plugins.text.checks.AbstractTextCheck;
-import org.sonar.plugins.text.checks.CheckRepository;
+import org.sonar.plugins.text.checks.TextChecksList;
 import org.sonar.plugins.text.checks.CrossFileScanPrelimIssue;
 import org.sonar.plugins.text.checks.TextIssue;
 import org.sonar.plugins.text.checks.TextSourceFile;
-
-import com.google.common.collect.Maps;
 
 public class TextIssueSensor implements Sensor {
   private final Logger LOG = LoggerFactory.getLogger(TextIssueSensor.class);
 
   private final Checks<Object> checks;
   private final FileSystem fs;
-  private final ResourcePerspectives resourcePerspectives;
-  private final Project project;
+  private final SensorContext sensorContext;
+  private final InputProject project;
   final Map<InputFile, List<CrossFileScanPrelimIssue>> crossFileChecksRawResults;
 
   /**
    * Use of IoC to get FileSystem
    */
-  public TextIssueSensor(final FileSystem fs, final ResourcePerspectives perspectives, final CheckFactory checkFactory, final Project project) {
-    this.checks = checkFactory.create(CheckRepository.REPOSITORY_KEY).addAnnotatedChecks(CheckRepository.getCheckClasses());
+  public TextIssueSensor(final FileSystem fs, SensorContext sensorContext, final CheckFactory checkFactory) {
+    this.checks = checkFactory.create(TextChecksList.REPOSITORY_KEY).addAnnotatedChecks((Iterable<?>) TextChecksList.getCheckClasses());
+
     this.fs = fs;
-    this.resourcePerspectives = perspectives;
-    this.project = project;
+    this.project = sensorContext.project();
+    this.sensorContext = sensorContext;
 
     // This data structure is shared across all cross-file checks so they can see each others' data.
     // Each file with any trigger or disallow match gets a listitem indicating the specifics of the Check that matched including line number. This object reference stays with the check and gets referenced later inside the "raiseIssuesAfterScan()" method call.
-    this.crossFileChecksRawResults = Maps.newHashMap();
-  }
-
-  /**
-   * This sensor is executed only when there are "text" language files present in the project.
-   *
-   * Consider in future versions: Will all users want this behavior? This plugin now scans files from other languages when the rule's ant-style file path pattern directs it to...
-   */
-  @Override
-  public boolean shouldExecuteOnProject(final Project project) {
-    return fs.hasFiles(fs.predicates().hasLanguage("text"));
+    this.crossFileChecksRawResults = new HashMap<>();
   }
 
   @Override
-  public void analyse(final Project project, final SensorContext sensorContext) {
+  public void describe(SensorDescriptor descriptor) {
+    descriptor.name("Inspects the project's files using custom rules built from regular expressions for known combinations of problematic configurations and/or code.");
+    descriptor.createIssuesForRuleRepositories(TextRulesDefinition.REPOSITORY_KEY);
+  }
+
+  @Override
+  public void execute(final SensorContext sensorContext) {
 
     for (InputFile inputFile : fs.inputFiles(fs.predicates().hasType(InputFile.Type.MAIN))) {
       analyseIndividualFile(inputFile);
@@ -76,17 +74,17 @@ public class TextIssueSensor implements Sensor {
           // Calls to cross-file checks need to pass in the data structure used to collect match data
           AbstractCrossFileCheck crossFileCheck = (AbstractCrossFileCheck) check;
           crossFileCheck.setRuleKey(checks.ruleKey(check));
-          crossFileCheck.validate(crossFileChecksRawResults, textSourceFile, project.getKey());
+          crossFileCheck.validate(crossFileChecksRawResults, textSourceFile, project.key());
         } else {
           AbstractTextCheck textCheck = (AbstractTextCheck) check;
           textCheck.setRuleKey(checks.ruleKey(check));
-          textCheck.validate(textSourceFile, project.getKey());
+          textCheck.validate(textSourceFile, project.key());
         }
       } catch (Exception e) {
-        LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.file().getAbsolutePath());
+        LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.uri().toString());
         LOG.warn("Brief failure cause info: " + e.toString());
         LOG.warn("Full failure details can be exposed by enabling debug logging on 'org.sonar.plugins.text.batch.TextIssueSensor'.");
-        LOG.debug("Check failure details:", e);
+        LOG.warn("Check failure details:", e);
       }
     }
 
@@ -107,16 +105,19 @@ public class TextIssueSensor implements Sensor {
 
   private void saveIssues(final List<TextIssue> issuesList, final InputFile againstThisFile) {
     for (TextIssue issue : issuesList) {
-      Issuable issuable = resourcePerspectives.as(Issuable.class, againstThisFile);
+      NewIssue newIssue = sensorContext.newIssue();
 
-      if (issuable != null) {
-        issuable.addIssue(
-          issuable.newIssueBuilder()
-            .ruleKey(issue.getRuleKey())
-            .line(issue.getLine())
-            .message(issue.getMessage())
-            .build());
-      }
+      NewIssueLocation primaryLocation = newIssue.newLocation()
+          .message(issue.getMessage())
+          .on(againstThisFile)
+// TODO: Right now I'm not taking on implementing logic to identify the specific characters that matched. Highlighting the entire line instead.
+//          .at(againstThisFile.newRange(issue.getLine(), 1, issue.getLine(), 2));
+          .at(againstThisFile.selectLine(issue.getLine()));
+
+      newIssue
+          .forRule(issue.getRuleKey())
+          .at(primaryLocation)
+          .save();
     }
   }
 

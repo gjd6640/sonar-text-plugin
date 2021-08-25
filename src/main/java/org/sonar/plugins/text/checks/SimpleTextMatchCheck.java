@@ -17,12 +17,10 @@ import org.slf4j.LoggerFactory;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
-import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "SimpleRegexMatchCheck",
       priority = Priority.MAJOR,
       name = "Simple Regex Match", description = "Simple regular expression matcher.")
-@RuleTemplate
 public class SimpleTextMatchCheck extends AbstractTextCheck {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTextCheck.class);
 

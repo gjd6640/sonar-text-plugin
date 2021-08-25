@@ -1,35 +1,30 @@
 package org.sonar.plugins.text;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.sonar.api.Properties;
-import org.sonar.api.Property;
-import org.sonar.api.SonarPlugin;
+import org.sonar.api.Plugin;
+import org.sonar.api.config.PropertyDefinition;
 import org.sonar.plugins.text.batch.TextIssueSensor;
 
-@Properties({
-	@Property(
-		    key = TextPlugin.FILE_SUFFIXES_KEY,
-		    defaultValue = TextLanguage.DEFAULT_SUFFIXES,
-		    name = "File suffixes",
-		    description = "Comma-separated list of suffixes for files to analyze.",
-		    global = true,
-		    project = false)
-	})
-public final class TextPlugin extends SonarPlugin {
+public final class TextPlugin implements Plugin {
 
   public static final String MY_PROPERTY = "sonar.example.myproperty";
-  
   public static final String FILE_SUFFIXES_KEY = "sonar-text-plugin.file.suffixes";
-  
-  // This is where you're going to declare all your SonarQube extensions
+  public static final String SONAR_WAY_PROFILE_NAME = "Sonar Text Plugin way";
+  public static final String SONAR_WAY_JSON_FILE_PATH = "org/sonar/l10n/text/default_quality_profile/Sonar_way_profile.json";
+
   @Override
-  public List getExtensions() {
-    return Arrays.asList(
-      TextIssueSensor.class, 
-      TextLanguage.class, 
-      TextRulesDefinition.class
-      );
+  public void define(Context context) {
+    context.addExtensions(
+        PropertyDefinition.builder(TextPlugin.FILE_SUFFIXES_KEY)
+          .name("File suffixes")
+          .description("List of suffixes of files to analyze.")
+          .defaultValue(TextLanguage.DEFAULT_SUFFIXES)
+          .multiValues(true)
+          .category("Text")
+          .build(),
+          TextIssueSensor.class,
+          TextLanguage.class,
+          TextRulesDefinition.class,
+          TextSonarWayProfile.class
+        );
   }
 }

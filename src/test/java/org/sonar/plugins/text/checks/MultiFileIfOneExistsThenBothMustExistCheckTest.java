@@ -1,12 +1,10 @@
 package org.sonar.plugins.text.checks;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,99 +17,90 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.sonar.api.batch.SensorContext;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.component.ResourcePerspectives;
-import org.sonar.api.issue.Issuable;
-import org.sonar.api.issue.Issuable.IssueBuilder;
-import org.sonar.api.issue.Issue;
-import org.sonar.api.resources.Project;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.plugins.text.TextLanguage;
+import org.sonar.api.scanner.fs.InputProject;
 import org.sonar.plugins.text.batch.TextIssueSensor;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck.RulePart;
+import org.sonar.plugins.text.testutils.FileTestUtils;
 
 public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCrossFileCheckTester {
+  final private Path tempInputFilesPath = Paths.get("target/surefire-test-resources/MultiFileIfOneExistsThenBothMustExistCheckTest/");
 
-  private Project project;
+  @Mock private InputProject project;
+  private SensorContextTester sensorContext;
+
   private DefaultFileSystem fs;
   private TextIssueSensor sensor;
   private final MultiFileIfOneStringExistsThenBothMustExistCheck realIfOneStringExistsBothMustExistMultiFileCheck = new MultiFileIfOneStringExistsThenBothMustExistCheck();
-  private Issuable mockIssuable;
 
   @Before
   public void setUp() throws Exception {
-    project = new Project("com.mycorp.projectA.service:service-do-X");
-    fs = new DefaultFileSystem();
-    fs.setBaseDir(new File("tmp/"));
+    Files.createDirectories(tempInputFilesPath);
+    sensorContext = SensorContextTester.create(tempInputFilesPath);
+    fs = sensorContext.fileSystem();
   }
 
   // Code originally borrowed from IssueSensorTest...
   // This is a bit of an integration test as it wires up the TextIssueSensor. This enables us to know that these classes play nice together.
   @Test
-  public void analyse_multi_class_integration_test() throws IOException {
-    // Setup
-    SensorContext sensorContext = mock(SensorContext.class);
+  public void execute_multi_class_integration_test() throws IOException {
+    // Create files to be scanned
+    // File containing trigger pattern
+    Path inputFilePath = Paths.get(tempInputFilesPath.toString(), "effective-pom.xml");
+    DefaultInputFile inputFile = FileTestUtils.createInputFile(inputFilePath, "The first line\n<target>1.8</target>\nThe third line");
+    fs.add(inputFile);
 
-      // Create files to be scanned
-      // File containing trigger pattern
-      DefaultInputFile inputFile = createInputFile("effective-pom.xml", TextLanguage.LANGUAGE_KEY);
-      fs.add(inputFile);
-      List<String> lines = Arrays.asList("The first line", "<target>1.8</target>", "The third line");
-      Path file = Paths.get(inputFile.file().getAbsolutePath());
-      inputFile.file().getParentFile().mkdirs();
-      Files.write(file, lines, Charset.forName("UTF-8"));
+    // File with disallowed config
+    inputFilePath = Paths.get(tempInputFilesPath.toString(), "feature-setup-env.properties");
+    inputFile = FileTestUtils.createInputFile(inputFilePath, String.join("\n", Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line")));
+    fs.add(inputFile);
 
-      // File with disallowed config
-      inputFile = createInputFile("feature-setup-env.properties", TextLanguage.LANGUAGE_KEY);
-      fs.add(inputFile);
-      lines = Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line");
-      file = Paths.get(inputFile.file().getAbsolutePath());
-      inputFile.file().getParentFile().mkdirs();
-      Files.write(file, lines, Charset.forName("UTF-8"));
+    // Configure the check
+    realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
+    realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
+    realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistFilePattern("**/*setup-env*");
+    realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistExpression(".*-DFooProperty");
+    realIfOneStringExistsBothMustExistMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
 
-      // Configure the check
-      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
-      realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
-      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistFilePattern("**/*setup-env*");
-      realIfOneStringExistsBothMustExistMultiFileCheck.setMustAlsoExistExpression(".*-DFooProperty");
-      realIfOneStringExistsBothMustExistMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
-
-      realIfOneStringExistsBothMustExistMultiFileCheck.setMessage("Project compiled to target Java 8 doesn't have recommended system property 'FooProperty'.");
+    realIfOneStringExistsBothMustExistMultiFileCheck.setMessage("Project compiled to target Java 8 doesn't have recommended system property 'FooProperty'.");
 
     // Run
-    sensor.analyse(project, sensorContext);
+    sensor.execute(sensorContext);
 
     // Verify
-    verify(mockIssuable).addIssue(Mockito.isA(Issue.class));
+
+    assertEquals(1, sensorContext.allIssues().size());
+
+    Issue issueRaised = sensorContext.allIssues().iterator().next();
+    assertEquals(RuleKey.of("text", "MultiFileIfOneStringExistsThenBothMustExistCheck"), issueRaised.ruleKey());
+    assertEquals(".:target/surefire-test-resources/MultiFileIfOneExistsThenBothMustExistCheckTest/effective-pom.xml", issueRaised.primaryLocation().inputComponent().key());
+    assertEquals("Project compiled to target Java 8 doesn't have recommended system property 'FooProperty'.", issueRaised.primaryLocation().message());
+    assertEquals(2, issueRaised.primaryLocation().textRange().start().line());
   }
 
   @Test
-  public void analyse_multi_class_integration_test_multiline_aka_DOTALL_regex() throws IOException {
+  public void execute_multi_class_integration_test_multiline_aka_DOTALL_regex() throws IOException {
     // Setup
-    SensorContext sensorContext = mock(SensorContext.class);
 
       // Create files to be scanned
       // File containing trigger pattern
-      DefaultInputFile inputFile = createInputFile("effective-pom.xml", TextLanguage.LANGUAGE_KEY);
+      Path sampleFilePath = Paths.get(tempInputFilesPath.toString(), "effective-pom.xml");
+      DefaultInputFile inputFile = FileTestUtils.createInputFile(sampleFilePath, "The first line\n<target>1.8</target>\nThe third line");
       fs.add(inputFile);
-      List<String> lines = Arrays.asList("The first line", "<target>1.8</target>", "The third line");
-      Path file = Paths.get(inputFile.file().getAbsolutePath());
-      inputFile.file().getParentFile().mkdirs();
-      Files.write(file, lines, Charset.forName("UTF-8"));
 
       // File with disallowed config
-      inputFile = createInputFile("feature-setup-env.properties", TextLanguage.LANGUAGE_KEY);
+      sampleFilePath = Paths.get(tempInputFilesPath.toString(), "feature-setup-env.properties");
+      inputFile = FileTestUtils.createInputFile(sampleFilePath, "The first line\nJAVA_HOME=/software/java64/jdk1.7.0_60\nThe third line");
       fs.add(inputFile);
-      lines = Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line");
-      file = Paths.get(inputFile.file().getAbsolutePath());
-      inputFile.file().getParentFile().mkdirs();
-      Files.write(file, lines, Charset.forName("UTF-8"));
 
       // Configure the check
       realIfOneStringExistsBothMustExistMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
@@ -123,36 +112,42 @@ public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCros
       realIfOneStringExistsBothMustExistMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 
     // Run
-    sensor.analyse(project, sensorContext);
+    sensor.execute(sensorContext);
 
     // Verify
-    verify(mockIssuable).addIssue(Mockito.isA(Issue.class));
+    assertEquals(1, sensorContext.allIssues().size());
+
+    Issue issueRaised = sensorContext.allIssues().iterator().next();
+    assertEquals(RuleKey.of("text", "MultiFileIfOneStringExistsThenBothMustExistCheck"), issueRaised.ruleKey());
   }
 
   @Test
   public void recordMatchTest(){
     // Set up
     MultiFileIfOneStringExistsThenBothMustExistCheck chk = new MultiFileIfOneStringExistsThenBothMustExistCheck();
-    Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
+    Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<>();
     chk.setCrossFileChecksRawResults(rawResults);
 
     // Execute
+    DefaultInputFile inputFile1 = FileTestUtils.createInputFileShell(tempInputFilesPath + "somepath");
+    DefaultInputFile inputFile2 = FileTestUtils.createInputFileShell(tempInputFilesPath + "somepath2");
+
     chk.setRuleKey(RuleKey.of("text","rule1"));
-    chk.setTextSourceFile(new TextSourceFile(new DefaultInputFile("somepath")));
+    chk.setTextSourceFile(new TextSourceFile(inputFile1));
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     chk.setRuleKey(RuleKey.of("text","rule2"));
-    chk.setTextSourceFile(new TextSourceFile(new DefaultInputFile("someOtherPath")));
+    chk.setTextSourceFile(new TextSourceFile(inputFile2));
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
     chk.recordMatch(RulePart.TriggerPattern, 1, "msg");
 
     // Verify
     Assert.assertTrue(rawResults.size() == 2);
-    List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.get(new DefaultInputFile("somepath"));
+    List<CrossFileScanPrelimIssue> issuesForOneFile = rawResults.get(inputFile1);
     Assert.assertTrue(issuesForOneFile.size() == 2);
 
-    issuesForOneFile = rawResults.get(new DefaultInputFile("someOtherPath"));
+    issuesForOneFile = rawResults.get(inputFile2);
     Assert.assertTrue(issuesForOneFile.size() == 2);
   }
 
@@ -160,10 +155,10 @@ public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCros
   public void raiseIssuesAfterScanTest() {
     // Set up
     MultiFileIfOneStringExistsThenBothMustExistCheck chk = new MultiFileIfOneStringExistsThenBothMustExistCheck();
-    Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<InputFile, List<CrossFileScanPrelimIssue>>();
+    Map<InputFile, List<CrossFileScanPrelimIssue>> rawResults = new HashMap<>();
 
     chk.setCrossFileChecksRawResults(rawResults);
-    List<CrossFileScanPrelimIssue> issuesForOneFile = new LinkedList<CrossFileScanPrelimIssue>();
+    List<CrossFileScanPrelimIssue> issuesForOneFile = new LinkedList<>();
     // Case A: trigger and "must exist" are present. No issue should be raised.
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.TriggerPattern, RuleKey.of("text","rule1"), 1, "msg"));
     issuesForOneFile.add(new CrossFileScanPrelimIssue(RulePart.MustAlsoExistPattern, RuleKey.of("text","rule1"), 1, "msg"));
@@ -174,7 +169,7 @@ public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCros
     // Case D: Neither Trigger nor "must exist" was found. No issue should be raised.
        // This space intentionally left blank. No matches found.
 
-    rawResults.put(new DefaultInputFile("file1"), issuesForOneFile);
+    rawResults.put(FileTestUtils.createInputFileShell(tempInputFilesPath + "file1"), issuesForOneFile);
 
     // Execute
     chk.setRuleKey(RuleKey.of("text","rule1"));
@@ -199,35 +194,17 @@ public class MultiFileIfOneExistsThenBothMustExistCheckTest extends AbstractCros
 
   @Before
   public void createIssueSensorBackedByMocks() {
-    ResourcePerspectives resourcePerspectives = mock(ResourcePerspectives.class);
     Checks<Object> checks = mock(Checks.class);
     CheckFactory checkFactory = mock(CheckFactory.class);
     when(checkFactory.create(Mockito.anyString())).thenReturn(checks);
+    when(checks.addAnnotatedChecks(Mockito.any(Iterable.class))).thenReturn(checks);
+
     List<Object> checksList = Arrays.asList(new Object[] {realIfOneStringExistsBothMustExistMultiFileCheck});
     when(checks.all()).thenReturn(checksList);
 
-    when(checks.ruleKey(Mockito.isA(StringDisallowedIfMatchInAnotherFileCheck.class))).thenReturn(RuleKey.of("text", "StringDisallowedIfMatchInAnotherFileCheck"));
     when(checks.ruleKey(Mockito.isA(MultiFileIfOneStringExistsThenBothMustExistCheck.class))).thenReturn(RuleKey.of("text", "MultiFileIfOneStringExistsThenBothMustExistCheck"));
-//    realStringDisallowedMultiFileCheck.setRuleKey(RuleKey.parse("text:StringDisallowedIfMatchInAnotherFileCheck")); // Not strictly necessary here. Normally set by the framework to the value in the Check class's annotation
 
-    when(checks.addAnnotatedChecks(Mockito.anyCollection())).thenReturn(checks);
-    mockIssuable = mock(Issuable.class);
-    when(resourcePerspectives.as(Mockito.eq(Issuable.class), Mockito.isA(InputFile.class))).thenReturn(mockIssuable);
-    IssueBuilder mockIssueBuilder = mock(IssueBuilder.class);
-    when(mockIssuable.newIssueBuilder()).thenReturn(mockIssueBuilder);
-    when(mockIssueBuilder.ruleKey(Mockito.isA(RuleKey.class))).thenReturn(mockIssueBuilder);
-    when(mockIssueBuilder.line(Mockito.anyInt())).thenReturn(mockIssueBuilder);
-    when(mockIssueBuilder.message(Mockito.anyString())).thenReturn(mockIssueBuilder);
-    when(mockIssueBuilder.build()).thenReturn(mock(Issue.class));
-
-    sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory, project);
-  }
-
-  private DefaultInputFile createInputFile(final String name, final String language) {
-    return new DefaultInputFile(name)
-      .setLanguage(language)
-      .setType(InputFile.Type.MAIN)
-      .setAbsolutePath(new File("src/test/resources/sensorIT/StringDisallowedIfMatchInAnotherFile/" + name).getAbsolutePath());
+    sensor = new TextIssueSensor(fs, sensorContext, checkFactory);
   }
 
 }

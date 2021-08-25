@@ -21,12 +21,10 @@ import org.sonar.check.RuleProperty;
 import org.sonar.plugins.text.checks.util.FileIOUtil;
 import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
-import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "StringDisallowedIfMatchInAnotherFileCheck",
       priority = Priority.MAJOR,
       name = "String disallowed if a match was found in another file", description = "Checks for a 'trigger match' in one file. Only if that is present a second expression is checked against all files in the project and all matches cause an issue to be raised. Regex is applied in simple non-DOTALL mode / is single-line-based.")
-@RuleTemplate
 public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFileCheck {
   private static final Logger LOG = LoggerFactory.getLogger(StringDisallowedIfMatchInAnotherFileCheck.class);
   protected static final int MAX_CHARACTERS_SCANNED = 500001;

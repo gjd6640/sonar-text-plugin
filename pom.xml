@@ -5,15 +5,15 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>0.9.0</version>
+  <version>1.1.0</version>
 
   <name>Sonar Text Plugin</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <sonar.buildVersion>4.5.2</sonar.buildVersion>
-    <jdk.min.version>1.7</jdk.min.version>
+    <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
+    <jdk.source.version>9</jdk.source.version>
+    <jdk.target.version>11</jdk.target.version>
   </properties>
 
   <dependencies>
@@ -30,53 +30,32 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonarsource.sslr-squid-bridge</groupId>
-  	  <artifactId>sslr-squid-bridge</artifactId>
-  	  <version>2.6.1</version>
-  	  <exclusions>
-  	    <exclusion>
-  	      <artifactId>picocontainer</artifactId>
-  	      <groupId>org.picocontainer</groupId>
-  	    </exclusion>
-  	    <exclusion>
-  	      <artifactId>jaxen</artifactId>
-  	      <groupId>jaxen</groupId>
-  	    </exclusion>
-  	    <exclusion>
-  	      <artifactId>sslr-core</artifactId>
-  	      <groupId>org.codehaus.sonar.sslr</groupId>
-  	    </exclusion>
-  	    <exclusion>
-  	      <artifactId>sslr-xpath</artifactId>
-  	      <groupId>org.codehaus.sonar.sslr</groupId>
-  	    </exclusion>
-  	  </exclusions>
-    </dependency>
-  
+	    <groupId>org.apache.commons</groupId>
+	    <artifactId>commons-lang3</artifactId>
+	    <version>3.12.0</version>
+	</dependency>
     <dependency>
-      <groupId>org.codehaus.sonar</groupId>
+      <groupId>org.sonarsource.sonarqube</groupId>
       <artifactId>sonar-plugin-api</artifactId>
       <version>${sonar.buildVersion}</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>sonar-duplications</artifactId>
-          <groupId>org.codehaus.sonar</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>picocontainer</artifactId>
-          <groupId>org.picocontainer</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>hibernate-annotations</artifactId>
-          <groupId>org.hibernate</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
-
+	<dependency>
+	    <groupId>org.sonarsource.analyzer-commons</groupId>
+	    <artifactId>sonar-analyzer-commons</artifactId>
+	    <version>1.16.0.719</version>
+	</dependency>
+    
     <!-- unit tests -->
     <dependency>
-      <groupId>org.codehaus.sonar</groupId>
+      <groupId>org.sonarsource.sonarqube</groupId>
+      <artifactId>sonar-plugin-api-impl</artifactId>
+      <version>${sonar.buildVersion}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.sonarsource.sonarqube</groupId>
       <artifactId>sonar-testing-harness</artifactId>
       <version>${sonar.buildVersion}</version>
       <scope>test</scope>
@@ -84,9 +63,15 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+	    <groupId>org.mockito</groupId>
+	    <artifactId>mockito-core</artifactId>
+	    <version>3.2.4</version>
+	    <scope>test</scope>
+	</dependency>
     <dependency>
       <groupId>org.easytesting</groupId>
       <artifactId>fest-assert</artifactId>
@@ -98,9 +83,9 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.sonar</groupId>
+        <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
         <artifactId>sonar-packaging-maven-plugin</artifactId>
-        <version>1.12.1</version>
+        <version>1.20.0.405</version>
         <extensions>true</extensions>
         <configuration>
           <pluginClass>org.sonar.plugins.text.TextPlugin</pluginClass>
@@ -111,8 +96,16 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-          <source>${jdk.min.version}</source>
-          <target>${jdk.min.version}</target>
+          <source>${jdk.source.version}</source>
+          <target>${jdk.target.version}</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M5</version>
+        <configuration>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
         </configuration>
       </plugin>
     </plugins>
