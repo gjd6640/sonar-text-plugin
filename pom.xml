@@ -5,15 +5,16 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>1.1.0</version>
+  <version>1.1.1</version>
 
   <name>Sonar Text Plugin</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
-    <jdk.source.version>9</jdk.source.version>
-    <jdk.target.version>11</jdk.target.version>
+    <sonarqube.instance.min.version>7.0</sonarqube.instance.min.version>
+    <jdk.source.version>8</jdk.source.version>
+    <jdk.target.version>8</jdk.target.version>
   </properties>
 
   <dependencies>
@@ -88,6 +89,7 @@
         <version>1.20.0.405</version>
         <extensions>true</extensions>
         <configuration>
+          <sonarQubeMinVersion>${sonarqube.instance.min.version}</sonarQubeMinVersion>
           <pluginClass>org.sonar.plugins.text.TextPlugin</pluginClass>
         </configuration>
       </plugin>
