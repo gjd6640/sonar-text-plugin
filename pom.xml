@@ -12,7 +12,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
-    <sonarqube.instance.min.version>7.0</sonarqube.instance.min.version>
+    <sonarqube.instance.min.version>8.0</sonarqube.instance.min.version>
     <jdk.source.version>8</jdk.source.version>
     <jdk.target.version>8</jdk.target.version>
   </properties>
