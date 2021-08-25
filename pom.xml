@@ -5,13 +5,13 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>1.1.0</version>
+  <version>1.1.0_v8.8_compat</version>
 
   <name>Sonar Text Plugin</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
+    <sonar.buildVersion>8.8.0.42792</sonar.buildVersion>
     <jdk.source.version>9</jdk.source.version>
     <jdk.target.version>11</jdk.target.version>
   </properties>
