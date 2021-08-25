@@ -81,7 +81,7 @@ public class TextIssueSensor implements Sensor {
           textCheck.validate(textSourceFile, project.key());
         }
       } catch (Exception e) {
-        LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.file().getAbsolutePath());
+        LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.uri().toString());
         LOG.warn("Brief failure cause info: " + e.toString());
         LOG.warn("Full failure details can be exposed by enabling debug logging on 'org.sonar.plugins.text.batch.TextIssueSensor'.");
         LOG.warn("Check failure details:", e);
