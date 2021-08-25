@@ -5,7 +5,7 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>1.1.1</version>
+  <version>1.1.2</version>
 
   <name>Sonar Text Plugin</name>
 
@@ -13,7 +13,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
     <sonarqube.instance.min.version>8.0</sonarqube.instance.min.version>
+
+    <!-- This is honored when the compiler used for the build is Java9+. Using it avoids
+           this JDK API issue:  https://www.morling.dev/blog/bytebuffer-and-the-dreaded-nosuchmethoderror/  -->
+    <maven.compiler.release>8</maven.compiler.release>
     <jdk.source.version>8</jdk.source.version>
+    <!-- The below does not take into account API changes as "maven.compiler.release" does. -->
     <jdk.target.version>8</jdk.target.version>
   </properties>
 
