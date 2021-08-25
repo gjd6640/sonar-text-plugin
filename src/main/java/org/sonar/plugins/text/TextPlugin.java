@@ -8,7 +8,7 @@ public final class TextPlugin implements Plugin {
 
   public static final String MY_PROPERTY = "sonar.example.myproperty";
   public static final String FILE_SUFFIXES_KEY = "sonar-text-plugin.file.suffixes";
-  public static final String SONAR_WAY_PROFILE_NAME = "Sonar way";
+  public static final String SONAR_WAY_PROFILE_NAME = "Sonar Text Plugin way";
   public static final String SONAR_WAY_JSON_FILE_PATH = "org/sonar/l10n/text/default_quality_profile/Sonar_way_profile.json";
 
   @Override
