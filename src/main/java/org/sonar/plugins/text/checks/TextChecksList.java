@@ -4,16 +4,21 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public class CheckRepository {
+public class TextChecksList {
 
   public static final String REPOSITORY_KEY = "text";
   public static final String REPOSITORY_NAME = "SonarQube";
   public static final String SONAR_WAY_PROFILE_NAME = "Sonar way";
 
-  private CheckRepository() {
+  private TextChecksList() {
+  }
+
+  public static Class<?>[] getChecksClassArray() {
+    return getCheckClasses().toArray(new Class[0]);
   }
 
   public static List<AbstractTextCheck> getChecks() {
+    // TODO: Consider removing usage of ImmutableList here as it is the only reason that we have a guava dependency...
     return ImmutableList.of(
         new SimpleTextMatchCheck(),
         new RequiredStringNotPresentCheck(),
@@ -23,8 +28,8 @@ public class CheckRepository {
       );
   }
 
-  public static List<Class> getCheckClasses() {
-    ImmutableList.Builder<Class> builder = ImmutableList.builder();
+  public static List<Class<?>> getCheckClasses() {
+    ImmutableList.Builder<Class<?>> builder = ImmutableList.builder();
 
     for (AbstractTextCheck check : getChecks()) {
       builder.add(check.getClass());

@@ -1,6 +1,7 @@
 package org.sonar.plugins.text.checks;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,12 +13,10 @@ import org.sonar.check.RuleProperty;
 import org.sonar.plugins.text.checks.util.FileIOUtil;
 import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
-import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "RequiredStringNotPresentRegexMatchCheck",
       priority = Priority.MAJOR,
       name = "Required String not Present", description = "Allows you to enforce \"When string 'A' is present string 'B' must also be present\". Raises an issue when text in the file matches to some 'trigger' regular expression but none match to a 'must exist' regular expression. The regular expression evaluation uses Java's Pattern.DOTALL option so '.*' will match past newline characters. Note that ^ and $ character matching is to beginning and end of file UNLESS you start your expression with (?m).")
-@RuleTemplate
 public class RequiredStringNotPresentCheck extends AbstractTextCheck {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTextCheck.class);
 
@@ -78,34 +77,39 @@ public class RequiredStringNotPresentCheck extends AbstractTextCheck {
         shouldFireOnFile(textSourceFile.getInputFile())
         ) {
 
-      Path path = textSourceFile.getInputFile().file().toPath();
+
       String entireFileAsString;
-      try {
-        entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
+      String fileLocationDescriptor = textSourceFile.getInputFile().uri().toString();
+      try (InputStream fileInputStream = textSourceFile.getInputFile().inputStream();) {
+        entireFileAsString = FileIOUtil.readInputStreamToString(fileInputStream, MAX_CHARACTERS_SCANNED, fileLocationDescriptor);
+
+        Pattern regexp = Pattern.compile(triggerExpression, Pattern.DOTALL);
+        Matcher matcher = regexp.matcher(entireFileAsString);
+        if (matcher.find()) {
+//          System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
+          int positionOfMatch = matcher.start();
+          lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatch);
+          triggerMatchFound = true;
+        }
+
+        regexp = Pattern.compile(mustExistExpression, Pattern.DOTALL);
+        matcher = regexp.matcher(entireFileAsString);
+        if (matcher.find()) {
+//          System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
+          mustExistMatchFound = true;
+        }
+
+        if (triggerMatchFound && !mustExistMatchFound) {
+          createViolation(lineNumberOfTriggerMatch, message);
+        }
+
       } catch (LargeFileEncounteredException ex) {
 //        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
         return;
+      } catch (IOException e) {
+        LOG.error("Skipping file '" + fileLocationDescriptor + "' due to unexpected exception.", e);
       }
 
-      Pattern regexp = Pattern.compile(triggerExpression, Pattern.DOTALL);
-      Matcher matcher = regexp.matcher(entireFileAsString);
-      if (matcher.find()) {
-//        System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
-        int positionOfMatch = matcher.start();
-        lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatch);
-        triggerMatchFound = true;
-      }
-
-      regexp = Pattern.compile(mustExistExpression, Pattern.DOTALL);
-      matcher = regexp.matcher(entireFileAsString);
-      if (matcher.find()) {
-//        System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
-        mustExistMatchFound = true;
-      }
-
-      if (triggerMatchFound && !mustExistMatchFound) {
-        createViolation(lineNumberOfTriggerMatch, message);
-      }
     }
   }
 

@@ -1,98 +1,101 @@
 package org.sonar.plugins.text.batch;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.sonar.api.batch.SensorContext;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.Metadata;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
-import org.sonar.api.component.ResourcePerspectives;
-import org.sonar.api.issue.Issuable;
-import org.sonar.api.issue.Issuable.IssueBuilder;
-import org.sonar.api.issue.Issue;
-import org.sonar.api.resources.Project;
+import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.checks.AbstractTextCheck;
 import org.sonar.plugins.text.checks.TextIssue;
 import org.sonar.plugins.text.checks.TextSourceFile;
+import org.sonar.plugins.text.testutils.FileTestUtils;
 
 public class IssueSensorTest {
 
-	  private Project project;
+    private File tempFileSystemBaseDir = Paths.get("target", "surefire-test-resources","IssueSensorTest").toFile();
+    private RuleKey dummyRuleKey = RuleKey.of("repoKey", "ruleKey");
+
+    private SensorContextTester sensorContextTester;
 	  private DefaultFileSystem fs;
 	  private TextIssueSensor sensor;
 	  private AbstractTextCheck textCheckMock;
-	  private Issuable mockIssuable;
 
 	  @Before
 	  public void setUp() throws Exception {
-	    project = new Project("com.mycorp.projectA.service:service-do-X");
-	    fs = new DefaultFileSystem();
-	    fs.setBaseDir(new File("tmp/"));
+	    Files.createDirectories(tempFileSystemBaseDir.toPath());
+	    fs = new DefaultFileSystem(tempFileSystemBaseDir);
+	    sensorContextTester = SensorContextTester.create(tempFileSystemBaseDir);
 	  }
 
 	  @Test
-	  public void shouldExecuteOnProject_No_EmptyProject() {
-		// No setup needed. Project starts out empty already
-		assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
+	  public void test_descriptor() throws Exception {
+	    DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
+	    sensor.describe(sensorDescriptor);
+	    assertThat(sensorDescriptor.name()).isEqualTo("Inspects the project's files using custom rules built from regular expressions for known combinations of problematic configurations and/or code.");
 	  }
 
 	  @Test
-	  public void shouldExecuteOnProject_No_OnlyJavaFiles() {
- 	    fs.add(createInputFile("file.java", "java"));
- 	    assertThat(sensor.shouldExecuteOnProject(project)).isFalse();
-	  }
+	  public void analyse() throws IOException {
+  		// Setup
+	    Path sampleFilePath = Paths.get(tempFileSystemBaseDir.toString(), "setup.properties");
+	    FileUtils.write(sampleFilePath.toFile(), "asdf\nasdf2\nasdf3", StandardCharsets.UTF_8);
 
-	  @Test
-	  public void shouldExecuteOnProject_Yes_ProjectHasTextFile() {
-	    fs.add(createInputFile("file.txt", TextLanguage.LANGUAGE_KEY));
-	    assertThat(sensor.shouldExecuteOnProject(project)).isTrue();
-	  }
+      fs.add(FileTestUtils.createInputFile(sampleFilePath.toString()));
 
-	  @Test
-	  public void analyse() {
-		// Setup
-		SensorContext sensorContext = mock(SensorContext.class);
+      Mockito.doAnswer(new Answer<Void>() {
+        @Override
+        public Void answer(final InvocationOnMock invocation) throws Throwable {
+          TextSourceFile sourceFile = (TextSourceFile)invocation.getArguments()[0];
+          sourceFile.addViolation(new TextIssue(dummyRuleKey, 1, "rule violated"));
+          return null;
+        }
+      }).when(textCheckMock).validate(Mockito.any(TextSourceFile.class), Mockito.matches("projectKey"));
 
-		// Run
-		fs.add(createInputFile("setup.properties", TextLanguage.LANGUAGE_KEY));
+	    // Run
+	    sensor.execute(sensorContextTester);
 
-		Mockito.doAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(final InvocationOnMock invocation) throws Throwable {
-				TextSourceFile sourceFile = (TextSourceFile)invocation.getArguments()[0];
-				sourceFile.addViolation(new TextIssue(mock(RuleKey.class), 1, "rule violated"));
-				return null;
-			}
-		}).when(textCheckMock).validate(Mockito.any(TextSourceFile.class), Mockito.matches("com.mycorp.projectA.service:service-do-X"));
+	    // Verify
+	    assertEquals(1, sensorContextTester.allIssues().size());
 
-	    sensor.analyse(project, sensorContext);
-
-	    verify(mockIssuable).addIssue(Mockito.isA(Issue.class));
+	    Issue issueRaised = sensorContextTester.allIssues().iterator().next();
+	    assertEquals(RuleKey.of("repoKey", "ruleKey"), issueRaised.ruleKey());
+	    assertEquals(".:target/surefire-test-resources/IssueSensorTest/setup.properties", issueRaised.primaryLocation().inputComponent().key());
+	    assertEquals("rule violated", issueRaised.primaryLocation().message());
+	    assertEquals(1, issueRaised.primaryLocation().textRange().start().line());
 	  }
 
     @Test  // Covers any failure case including where the scanner encounters bytes that don't match the current character set
 	  public void analyse_ProceedQuietlyWhenSensorThrowsException() {
 	    // Setup
-	    SensorContext sensorContext = mock(SensorContext.class);
-
 
 	    // One of these will NOT be scanned due to an exception being encountered
 	    fs.add(createInputFile("setup.properties", TextLanguage.LANGUAGE_KEY));
@@ -108,49 +111,38 @@ public class IssueSensorTest {
 	          throw new RuntimeException(new MalformedInputException(1));
 	        } else {
             TextSourceFile sourceFile = (TextSourceFile)invocation.getArguments()[0];
-            sourceFile.addViolation(new TextIssue(mock(RuleKey.class), 1, "rule violated"));
+            sourceFile.addViolation(new TextIssue(dummyRuleKey, 1, "rule violated"));
             return null;
 	        }
 	      }
-	    }).when(textCheckMock).validate(Mockito.any(TextSourceFile.class), Mockito.matches("com.mycorp.projectA.service:service-do-X"));
-
-	    when(textCheckMock.getRuleKey()).thenReturn(RuleKey.parse("SomeLanguage:RuleKey"));
+	    }).when(textCheckMock).validate(Mockito.any(TextSourceFile.class), Mockito.matches("projectKey"));
 
 	    // Run
-	    sensor.analyse(project, sensorContext);
+	    sensor.execute(sensorContextTester);
 
 	    // Assertions
-	    verify(mockIssuable).addIssue(Mockito.isA(Issue.class));
+	    assertEquals(1, sensorContextTester.allIssues().size());
    }
 
 	  @Before
-	  public void createIssueSensorBackedByMocks() {
-			ResourcePerspectives resourcePerspectives = mock(ResourcePerspectives.class);
-			Checks<Object> checks = mock(Checks.class);
+    public void createIssueSensorBackedByMocks() {
 			CheckFactory checkFactory = mock(CheckFactory.class);
+      Checks<Object> checks = mock(Checks.class);
 			when(checkFactory.create(Mockito.anyString())).thenReturn(checks);
+			when(checks.addAnnotatedChecks(Mockito.any(Iterable.class))).thenReturn(checks);
 			textCheckMock = mock(AbstractTextCheck.class);
 			List<Object> checksList = Arrays.asList(new Object[] {textCheckMock});
 			when(checks.all()).thenReturn(checksList);
 
-			when(checks.addAnnotatedChecks(Mockito.anyCollection())).thenReturn(checks);
-			mockIssuable = mock(Issuable.class);
-			when(resourcePerspectives.as(Mockito.eq(Issuable.class), Mockito.isA(InputFile.class))).thenReturn(mockIssuable);
-			IssueBuilder mockIssueBuilder = mock(IssueBuilder.class);
-			when(mockIssuable.newIssueBuilder()).thenReturn(mockIssueBuilder);
-			when(mockIssueBuilder.ruleKey(Mockito.isA(RuleKey.class))).thenReturn(mockIssueBuilder);
-			when(mockIssueBuilder.line(Mockito.anyInt())).thenReturn(mockIssueBuilder);
-			when(mockIssueBuilder.message(Mockito.anyString())).thenReturn(mockIssueBuilder);
-			when(mockIssueBuilder.build()).thenReturn(mock(Issue.class));
-
-			sensor = new TextIssueSensor(fs, resourcePerspectives, checkFactory, project);
-	  }
+      sensor = new TextIssueSensor(fs, sensorContextTester, checkFactory);
+    }
 
 	  private DefaultInputFile createInputFile(final String name, final String language) {
-		    return new DefaultInputFile(name)
-		      .setLanguage(language)
-		      .setType(InputFile.Type.MAIN)
-		      .setAbsolutePath(new File("src/test/resources/parsers/linecount/" + name).getAbsolutePath());
-		  }
+	    return TestInputFileBuilder.create(".", Paths.get(tempFileSystemBaseDir.toPath().toString(), name).toString())
+          .setLanguage(language)
+          .setType(InputFile.Type.MAIN)
+          .setMetadata(new Metadata(2, 2, "huh?", new int[] {0,10}, new int[] {9,19}, 19))
+	        .build();
+	  }
 
 }

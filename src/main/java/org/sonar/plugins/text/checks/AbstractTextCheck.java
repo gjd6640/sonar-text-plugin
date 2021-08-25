@@ -20,7 +20,7 @@ public abstract class AbstractTextCheck {
   private String doNotFireForTheseFileNamesRegex;
 
   protected final void createViolation(final Integer linePosition, final String message) {
-	  textSourceFile.addViolation(new TextIssue(ruleKey, linePosition, message));
+    textSourceFile.addViolation(new TextIssue(ruleKey, linePosition, message));
   }
 
   /**
@@ -45,7 +45,7 @@ public abstract class AbstractTextCheck {
 	    return true;
 	  } else {
 	    Pattern regexp = Pattern.compile(doNotFireForTheseFileNamesRegex);
-	    Matcher matcher = regexp.matcher(currentFile.file().getName());
+	    Matcher matcher = regexp.matcher(currentFile.filename());
 	    return !matcher.find();
 	  }
   }

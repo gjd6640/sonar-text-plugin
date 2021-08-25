@@ -13,7 +13,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 	@Test
 	public void simpleCase_successfulMatch() throws IOException {
 		// Set up
-		super.createFileSystem();
+		//super.createFileSystem();
 		File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
 		SimpleTextMatchCheck check = new SimpleTextMatchCheck();
 		check.setExpression(".*objectionable string.*");

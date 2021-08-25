@@ -1,6 +1,5 @@
 package org.sonar.plugins.text.checks;
 
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,12 +9,10 @@ import org.sonar.check.RuleProperty;
 import org.sonar.plugins.text.checks.util.FileIOUtil;
 import org.sonar.plugins.text.checks.util.LargeFileEncounteredException;
 import org.sonar.plugins.text.checks.util.LineNumberFinderUtil;
-import org.sonar.squidbridge.annotations.RuleTemplate;
 
 @Rule(key = "MultilineTextMatchCheck",
       priority = Priority.MAJOR,
       name = "Multiline Regex Check", description = "Multiline (Java Match.DOTALL) regular expression matcher. Scans only text files containing less than " + (MultilineTextMatchCheck.MAX_CHARACTERS_SCANNED-1) + " characters. Note that ^ and $ character matching is to beginning and end of file UNLESS you start your expression with (?m).")
-@RuleTemplate
 public class MultilineTextMatchCheck extends AbstractTextCheck {
   @RuleProperty(key = "regularExpression", type = "TEXT", defaultValue = "(?m)^some.*regex search string\\. dot matches all$")
   private String searchRegularExpression;
@@ -65,12 +62,11 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
         shouldFireOnFile(textSourceFile.getInputFile())
         ) {
 
-      Path path = textSourceFile.getInputFile().file().toPath();
       String entireFileAsString;
       try {
-        entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
+        entireFileAsString = FileIOUtil.readFileAsString(textSourceFile, MAX_CHARACTERS_SCANNED);
       } catch (LargeFileEncounteredException ex) {
-//        System.out.println("Skipping file. Text scanner (" + this.getClass().getSimpleName() + ") maximum file size ( " + (MAX_CHARACTERS_SCANNED-1) + " chars) encountered for file '" + textSourceFile.getInputFile().file().getAbsolutePath() + "'. Did not check this file AT ALL.");
+        // The util class logs the fact that we're skipping this file...
         return;
       }
 
@@ -78,8 +74,9 @@ public class MultilineTextMatchCheck extends AbstractTextCheck {
       Matcher matcher = regexp.matcher(entireFileAsString);
       if (matcher.find()) {
 //        System.out.println("Match: " + line + " on line " + lineReader.getLineNumber());
-        int positionOfMatch = matcher.start();
-        lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatch);
+        int positionOfMatchBegin = matcher.start();
+//        int positionOfMatchEnd = matcher.end();
+        lineNumberOfTriggerMatch = LineNumberFinderUtil.countLines(entireFileAsString, positionOfMatchBegin);
         createViolation(lineNumberOfTriggerMatch, message);
       }
 
