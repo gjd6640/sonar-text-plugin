@@ -56,17 +56,6 @@ public class FileTestUtils {
         .setCharset(StandardCharsets.UTF_8)
         .build();
   }
-/*
-  private static DefaultInputFile createInputFile(Path moduleBaseDir, String filename, Charset charset) throws Exception {
-    DefaultInputFile inputFile = TestInputFileBuilder.create("modulekey", filename)
-      .setModuleBaseDir(moduleBaseDir)
-      .setType(Type.MAIN)
-      .setLanguage(Xml.KEY)
-      .setCharset(charset)
-      .build();
-    Metadata metadata = new FileMetadata().readMetadata(new FileInputStream(inputFile.file()), inputFile.charset(), inputFile.absolutePath());
-    return inputFile.setMetadata(metadata);
-*/
 
   private static AnalysisWarnings noOpAnalysisWarnings
     = new AnalysisWarnings() {

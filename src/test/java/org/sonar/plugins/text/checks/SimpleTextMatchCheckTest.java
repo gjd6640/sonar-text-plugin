@@ -106,9 +106,9 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 	private int countTextIssuesFoundAtLine(final int lineNumber, final List<TextIssue> list) {
 	  int countFound = 0;
 	  for (TextIssue currentIssue : list ) {
-		if (currentIssue.getLine() == lineNumber) {
-			countFound++;
-		}
+  		if (currentIssue.getLine() == lineNumber) {
+  			countFound++;
+  		}
 	  }
 	  return countFound;
 	}

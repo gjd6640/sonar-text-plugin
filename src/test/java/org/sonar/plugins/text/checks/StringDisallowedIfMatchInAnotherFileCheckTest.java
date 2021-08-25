@@ -55,25 +55,27 @@ public class StringDisallowedIfMatchInAnotherFileCheckTest extends AbstractCross
   @Test
   public void analyse_multi_class_integration_test() throws IOException {
     // Setup
-      // Create files to be scanned
-      // File containing trigger pattern
-      Path inputFilePath = Paths.get(tempInputFilesPath.toString(), "effective-pom.xml");
-      DefaultInputFile inputFile = FileTestUtils.createInputFile(inputFilePath, String.join("\n", Arrays.asList("The first line", "<target>1.8</target>", "The third line")));
-      fs.add(inputFile);
 
-      // File with disallowed config
-      inputFilePath = Paths.get(tempInputFilesPath.toString(), "feature-setup-env.properties");
-      inputFile = FileTestUtils.createInputFile(inputFilePath, String.join("\n", Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line")));
-      fs.add(inputFile);
+    // Create files to be scanned
 
-      // Configure the check
-      realStringDisallowedMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
-      realStringDisallowedMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
-      realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
-      realStringDisallowedMultiFileCheck.setDisallowExpression(".*JAVA_HOME=.*jdk1.(6|7).*");
-      realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
+    // File containing trigger pattern
+    Path inputFilePath = Paths.get(tempInputFilesPath.toString(), "effective-pom.xml");
+    DefaultInputFile inputFile = FileTestUtils.createInputFile(inputFilePath, String.join("\n", Arrays.asList("The first line", "<target>1.8</target>", "The third line")));
+    fs.add(inputFile);
 
-      realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
+    // File with disallowed config
+    inputFilePath = Paths.get(tempInputFilesPath.toString(), "feature-setup-env.properties");
+    inputFile = FileTestUtils.createInputFile(inputFilePath, String.join("\n", Arrays.asList("The first line", "JAVA_HOME=/software/java64/jdk1.7.0_60", "The third line")));
+    fs.add(inputFile);
+
+    // Configure the check
+    realStringDisallowedMultiFileCheck.setTriggerFilePattern("**/effective-pom.xml");
+    realStringDisallowedMultiFileCheck.setTriggerExpression(".*<target>1.8</target>.*");
+    realStringDisallowedMultiFileCheck.setDisallowFilePattern("**/*setup-env*");
+    realStringDisallowedMultiFileCheck.setDisallowExpression(".*JAVA_HOME=.*jdk1.(6|7).*");
+    realStringDisallowedMultiFileCheck.setApplyExpressionToOneLineOfTextAtATime(true);
+
+    realStringDisallowedMultiFileCheck.setMessage("Project compiled to target Java 8 is being booted under a prior JVM version.");
 
     // Run
     sensor.execute(sensorContext);
