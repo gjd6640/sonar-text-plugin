@@ -50,7 +50,7 @@ public class TextIssueSensor implements Sensor {
 
   @Override
   public void describe(SensorDescriptor descriptor) {
-    descriptor.name("Inspects the project's files using custom rules built from regular expressions for known combinations of problematic configurations and/or code.");
+    descriptor.name("Community text plugin (sonar-text-plugin)");
     descriptor.createIssuesForRuleRepositories(TextRulesDefinition.REPOSITORY_KEY);
   }
 
