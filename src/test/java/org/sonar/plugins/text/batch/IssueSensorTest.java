@@ -1,6 +1,5 @@
 package org.sonar.plugins.text.batch;
 
-import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,7 +59,7 @@ public class IssueSensorTest {
 	  public void test_descriptor() throws Exception {
 	    DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
 	    sensor.describe(sensorDescriptor);
-	    assertThat(sensorDescriptor.name()).isEqualTo("Inspects the project's files using custom rules built from regular expressions for known combinations of problematic configurations and/or code.");
+	    assertEquals("Community text plugin (sonar-text-plugin)", sensorDescriptor.name());
 	  }
 
 	  @Test
