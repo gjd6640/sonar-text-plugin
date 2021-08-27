@@ -3,7 +3,6 @@ package org.sonar.plugins.text.batch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
@@ -82,8 +81,6 @@ public class TextIssueSensor implements Sensor {
         }
       } catch (Exception e) {
         LOG.warn("Check for rule \"{}\" choked on file {}. Continuing the scan. Skipping evaluation of just this one rule against this one file.", ((AbstractTextCheck) check).getRuleKey(), inputFile.uri().toString());
-        LOG.warn("Brief failure cause info: " + e.toString());
-        LOG.warn("Full failure details can be exposed by enabling debug logging on 'org.sonar.plugins.text.batch.TextIssueSensor'.");
         LOG.warn("Check failure details:", e);
       }
     }
@@ -104,21 +101,24 @@ public class TextIssueSensor implements Sensor {
   }
 
   private void saveIssues(final List<TextIssue> issuesList, final InputFile againstThisFile) {
-    for (TextIssue issue : issuesList) {
-      NewIssue newIssue = sensorContext.newIssue();
+    try {
+      for (TextIssue issue : issuesList) {
+        NewIssue newIssue = sensorContext.newIssue();
 
-      NewIssueLocation primaryLocation = newIssue.newLocation()
-          .message(issue.getMessage())
-          .on(againstThisFile)
-// TODO: Right now I'm not taking on implementing logic to identify the specific characters that matched. Highlighting the entire line instead.
-//          .at(againstThisFile.newRange(issue.getLine(), 1, issue.getLine(), 2));
-          .at(againstThisFile.selectLine(issue.getLine()));
+        NewIssueLocation primaryLocation = newIssue.newLocation()
+            .message(issue.getMessage())
+            .on(againstThisFile)
+  // TODO: Right now I'm not taking on implementing logic to identify the specific characters that matched. Highlighting the entire line instead.
+  //          .at(againstThisFile.newRange(issue.getLine(), 1, issue.getLine(), 2));
+            .at(againstThisFile.selectLine(issue.getLine()));
 
-      newIssue
-          .forRule(issue.getRuleKey())
-          .at(primaryLocation)
-          .save();
+        newIssue
+            .forRule(issue.getRuleKey())
+            .at(primaryLocation)
+            .save();
+      }
+    } catch (Exception e) {
+      LOG.error("Choked while savind issues identified for file {}. Continuing the scan. Issues were: \n\n{}.", againstThisFile.uri().toString(), issuesList.toString(), e);
     }
   }
-
 }

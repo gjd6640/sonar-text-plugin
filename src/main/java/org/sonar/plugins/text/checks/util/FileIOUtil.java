@@ -39,14 +39,20 @@ public final class FileIOUtil {
     }
   }
 
+  /**
+   * The caller MUST CLOSE the object that this method returns. Note that this adds no
+   * buffering so it may also make sense for the caller to use: BufferedReader reader = new BufferedReader(inputStreamReader);
+   */
+  public static InputStreamReader createTolerantInputStreamReader(InputStream inStream) {
+    CharsetDecoder decoder = (StandardCharsets.UTF_8).newDecoder().onMalformedInput(CodingErrorAction.IGNORE);
+    return new InputStreamReader(inStream, decoder);
+  }
+
   public static String readInputStreamToString(final InputStream fileContentsInputStream, final int failWhenCharacterCountExceeds, String fileLocationDescription) {
     CharBuffer fileContentBuffer = CharBuffer.allocate(failWhenCharacterCountExceeds);
 
-    CharsetDecoder decoder = (StandardCharsets.UTF_8).newDecoder();
-    decoder.onMalformedInput(CodingErrorAction.IGNORE);
-
     try (
-        Reader inputStreamReader = new InputStreamReader(fileContentsInputStream, decoder);
+        Reader inputStreamReader = FileIOUtil.createTolerantInputStreamReader(fileContentsInputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
     ) {
       int result = reader.read(fileContentBuffer);

@@ -1,10 +1,10 @@
 package org.sonar.plugins.text.checks;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,7 +53,7 @@ public class MultiFileIfOneStringExistsThenBothMustExistCheck extends AbstractCr
                       ) {
     setTextSourceFile(textSourceFile);
     setCrossFileChecksRawResults(crossFileChecksRawResults);
-    LOG.debug("Current file: {}", textSourceFile.getInputFile().absolutePath());
+    LOG.debug("Current file: {}", textSourceFile.getInputFile().uri());
     LOG.debug("validating");
 
     if (shouldFireForProject(projectKey) &&
@@ -76,7 +76,7 @@ public class MultiFileIfOneStringExistsThenBothMustExistCheck extends AbstractCr
     }
 
     if (regularExpression != null && isFileIncluded(fileMatchPattern)) {
-      LOG.debug("Checking file: {}", textSourceFile.getInputFile().absolutePath());
+      LOG.debug("Checking file: {}", textSourceFile.getInputFile().uri());
 
       if (applyExpressionToOneLineOfTextAtATime) {
         recordMatchesOneLineAtATime(textSourceFile, regularExpression, rulePart);
@@ -93,32 +93,32 @@ public class MultiFileIfOneStringExistsThenBothMustExistCheck extends AbstractCr
     Pattern regexp = Pattern.compile(regularExpression);
     Matcher matcher = regexp.matcher(""); // Apply the pattern to search this empty string just to get a matcher reference. We'll reset it in a moment to work against a real string.
 
-    Path path = textSourceFile.getInputFile().file().toPath();
-    try (
-        LineNumberReader lineReader = new LineNumberReader(Files.newBufferedReader(path, StandardCharsets.UTF_8));
+    try (InputStream is = textSourceFile.getInputFile().inputStream();
+        InputStreamReader streamReader =  FileIOUtil.createTolerantInputStreamReader(is);
+        BufferedReader reader = new BufferedReader(streamReader);
+        LineNumberReader lineReader = new LineNumberReader(reader);
         ) {
           String line = null;
           while ((line = lineReader.readLine()) != null) {
             matcher.reset(line); //reset the input
             if (matcher.find()) {
-              LOG.debug("{} match found: '{}' on line {} of file '{}'.", recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().file().toPath());
+              LOG.debug("{} match found: '{}' on line {} of file '{}'.", recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().uri());
               recordMatch(recordMatchAsRulePart, lineReader.getLineNumber(), message);
             }
           }
       }
       catch (IOException ex){
-        throw new RuntimeException(ex);
+        throw new RuntimeException("Choked while looking for matches in file " + textSourceFile.getInputFile().uri(), ex);
       }
 
   }
 
   private void recordMatchesUsingDOTALLFriendlyApproach(final TextSourceFile textSourceFile, final String regularExpression, final RulePart recordMatchAsRulePart) {
-    Path path = textSourceFile.getInputFile().file().toPath();
     String entireFileAsString;
     int lineNumberOfTriggerMatch = -1;
 
     try {
-      entireFileAsString = FileIOUtil.readFileAsString(path, MAX_CHARACTERS_SCANNED);
+      entireFileAsString = FileIOUtil.readFileAsString(textSourceFile, MAX_CHARACTERS_SCANNED);
     } catch (LargeFileEncounteredException ex) {
       // Note: The FileIOUtil method logs a warning so this doesn't completely hide/swallow the concern
       return;

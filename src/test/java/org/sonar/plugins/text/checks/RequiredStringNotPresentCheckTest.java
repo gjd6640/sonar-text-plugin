@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.rule.RuleKey;
 
 public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
 
@@ -21,6 +22,7 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(String.valueOf(buffer) + "prod-server-01.*prod-server-02:1000,\nprod-server-03");
     RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setTriggerExpression("prod-server-01.*prod-server-02:1000");
     check.setMustExistExpression("prod-server-03");
 
@@ -41,6 +43,7 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(String.valueOf(buffer) + "prod-server-01.*prod-server-02:1000");
     RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setTriggerExpression("prod-server-01.*prod-server-02:1000");
     check.setMustExistExpression("prod-server-03");
 
@@ -58,6 +61,7 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
 		super.createFileSystem();
 		File tempFile1 = super.createTempFile("clusterURLs=prod-server-01:1000,\nprod-server-02:1000\nprod-server-03:1000");
 		RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+		check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
 		check.setTriggerExpression("prod-server-01.*prod-server-02:1000");
 		check.setMustExistExpression("prod-server-03");
 
@@ -75,6 +79,7 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
     FileSystem fs = super.createFileSystem();
     File tempFile1 = super.createTempFile("asdf\nasdf\nclusterURLs=prod-server-01:1000,\nprod-server-02:1000\n");
     RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setTriggerExpression("prod-server-01.*prod-server-02:1000");
     check.setMustExistExpression("prod-server-03");
 
@@ -95,6 +100,7 @@ public class RequiredStringNotPresentCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(TEST_FILE_CONTENT);
     RequiredStringNotPresentCheck check = new RequiredStringNotPresentCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setTriggerExpression("PALERT:YES");
     check.setMustExistExpression("(?m)^(?!#)PROD_EMAIL:[ ]*[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]+");
 
