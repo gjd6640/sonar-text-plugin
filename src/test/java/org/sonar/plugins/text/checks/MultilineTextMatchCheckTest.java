@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
+import org.sonar.api.rule.RuleKey;
 
 public class MultilineTextMatchCheckTest extends AbstractCheckTester {
 
@@ -22,16 +23,17 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(String.valueOf(buffer) + "prod-server-01.*prod-server-02:1000,\nprod-server-03");
     MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setSearchRegularExpression("prod-server-01.*prod-server-02:1000");
-    
+
     // Run
     TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
-    
+
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();
     assertTrue(issuesFound.size() == 0);
   }
-  
+
   @Test
   public void largeTextFileJustUnderLimit_scanIsPerformed() throws IOException {
     char[] buffer = new char[MultilineTextMatchCheck.MAX_CHARACTERS_SCANNED-150]; // fit the trigger expression in below the max
@@ -41,31 +43,33 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(String.valueOf(buffer) + "prod-server-01.*prod-server-02:1000");
     MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setSearchRegularExpression("prod-server-01.*prod-server-02:1000");
-    
+
     // Run
     TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
-    
+
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();
     assertTrue(issuesFound.size() == 1);
   }
-  
+
   @Test
   public void stringFoundInSmallFile_IssueRaised() throws IOException {
     // Set up
     super.createFileSystem();
     File tempFile1 = super.createTempFile("\n\nclusterURLs=prod-server-01:1000,\nprod-server-02:1000\n");
     MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setSearchRegularExpression("prod-server-01.*prod-server-02:1000");
-    
+
     // Run
     TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
-    
+
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();
     assertTrue("Found " + issuesFound.size() + " issues", issuesFound.size() == 1);
-    
+
     assertTrue(countTextIssuesFoundAtLine(3, issuesFound) == 1);
   }
 
@@ -84,6 +88,7 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
         "EXIT SCRIPT";
     File tempFile1 = super.createTempFile(searchThis);
     MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setSearchRegularExpression("(?i)EXIT\\s+SCRIPT\\s*\\n*(?=[\\w])");
 
     // Run
@@ -102,17 +107,18 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
     super.createFileSystem();
     File tempFile1 = super.createTempFile(TEST_FILE_CONTENT);
     MultilineTextMatchCheck check = new MultilineTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setSearchRegularExpression("PALERT:YES");
-    
+
     // Run
     TextSourceFile result = parseAndCheck(tempFile1, check, "com.mycorp.projectA.service:service-do-X");
-    
+
     // Check
     List<TextIssue> issuesFound = result.getTextIssues();
     assertTrue("Found " + issuesFound.size() + " issues", issuesFound.size() == 1);
     assertTrue(countTextIssuesFoundAtLine(4, issuesFound) == 1);
   }
-  
+
 	private int countTextIssuesFoundAtLine(int lineNumber, List<TextIssue> list) {
 	  int countFound = 0;
 	  for (TextIssue currentIssue : list ) {
@@ -122,11 +128,11 @@ public class MultilineTextMatchCheckTest extends AbstractCheckTester {
 	  }
 	  return countFound;
 	}
-	
-	
-	 private String TEST_FILE_CONTENT = "# somecomment\r\n" + 
-	      "\r\n" + 
-	      "# PEMAIL: <<TODO: Add PEmail>>\r\n" + 
-	      "PALERT:YES\r\n" + 
+
+
+	 private String TEST_FILE_CONTENT = "# somecomment\r\n" +
+	      "\r\n" +
+	      "# PEMAIL: <<TODO: Add PEmail>>\r\n" +
+	      "PALERT:YES\r\n" +
 	      "asdf";
 }

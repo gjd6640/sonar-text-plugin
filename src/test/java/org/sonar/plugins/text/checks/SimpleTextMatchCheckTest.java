@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
+import org.sonar.api.rule.RuleKey;
 
 public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 
@@ -16,6 +17,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		//super.createFileSystem();
 		File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
 		SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+		check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
 		check.setExpression(".*objectionable string.*");
 
 		// Run
@@ -37,6 +39,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
     File jsFile = new File("src" + sep + "test" + sep + "resources" + sep + "invalidCharacterBytes.js");
 
     SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
     check.setExpression(".*(ts_sort_numeric|ts_sort_datetime).*");
 
     // Run
@@ -56,6 +59,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 	    super.createFileSystem();
 	    File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\nobjectionable string");
 	    SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+	    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
 	    check.setExpression("^objectionable string");
 
 	    // Run
@@ -75,6 +79,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 		super.createFileSystem();
 		File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
 		SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+		check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
 		check.setExpression(".*objectionable string.*");
 		check.setDoNotFireForProjectKeysRegex(".*do-SPECIAL_THING.*");
 		// Run
@@ -91,6 +96,7 @@ public class SimpleTextMatchCheckTest extends AbstractCheckTester {
 	    super.createFileSystem();
 	    File tempFile1 = super.createTempFile("objectionable string\n\nsadf\n\n1objectionable string");
 	    SimpleTextMatchCheck check = new SimpleTextMatchCheck();
+	    check.setRuleKey(RuleKey.of("text", "someRuleKey_for_class_" + check.getClass().getName()));
 	    check.setExpression(".*objectionable string.*");
 	    check.setDoNotFireForProjectKeysRegex(".*do-SPECIAL_THING.*"); // should have no effect here
 	    check.setDoNotFireForTheseFileNamesRegex("file.xml"); // this is the file name that 'super.createFileSystem()' sets so this will have an effect here

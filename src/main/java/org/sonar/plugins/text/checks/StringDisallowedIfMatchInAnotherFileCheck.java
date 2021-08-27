@@ -1,10 +1,9 @@
 package org.sonar.plugins.text.checks;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
                       ) {
     setTextSourceFile(textSourceFile);
     setCrossFileChecksRawResults(crossFileChecksRawResults);
-    LOG.debug("Current file: {}", textSourceFile.getInputFile().absolutePath());
+    LOG.debug("Current file: {}", textSourceFile.getInputFile().uri());
     LOG.debug("validating");
 
     if (triggerExpression != null &&
@@ -63,7 +62,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
         shouldFireForProject(projectKey) &&
         shouldFireOnFile(textSourceFile.getInputFile())
         ) {
-      LOG.debug("Checking file: {}", textSourceFile.getInputFile().absolutePath());
+      LOG.debug("Checking file: {}", textSourceFile.getInputFile().uri());
 
       if (applyExpressionToOneLineOfTextAtATime) {
         recordMatchesOneLineAtATime(textSourceFile, triggerExpression, RulePart.TriggerPattern);
@@ -71,7 +70,7 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
         recordMatchesUsingDOTALLFriendlyApproach(textSourceFile, triggerExpression, RulePart.TriggerPattern);
       }
     } else {
-      LOG.debug("Did not check file '{}' for trigger because it looked like a file that I shouldn't process.", textSourceFile.getInputFile().absolutePath());
+      LOG.debug("Did not check file '{}' for trigger because it looked like a file that I shouldn't process.", textSourceFile.getInputFile().uri());
     }
 
     if (disallowExpression != null &&
@@ -92,22 +91,22 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
     Pattern regexp = Pattern.compile(regularExpression);
     Matcher matcher = regexp.matcher(""); // Apply the pattern to search this empty string just to get a matcher reference. We'll reset it in a moment to work against a real string.
 
-    Path path = textSourceFile.getInputFile().file().toPath();
     try (
-        BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
+        InputStream is = textSourceFile.getInputFile().inputStream();
+        InputStreamReader reader = FileIOUtil.createTolerantInputStreamReader(is);
         LineNumberReader lineReader = new LineNumberReader(reader);
         ) {
-      String line = null;
+          String line = null;
           while ((line = lineReader.readLine()) != null) {
             matcher.reset(line); //reset the input
             if (matcher.find()) {
-              LOG.debug("{} match found: '{}' on line {} of file '{}'.", new Object[]{recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().file().toPath()});
+              LOG.debug("{} match found: '{}' on line {} of file '{}'.", new Object[]{recordMatchAsRulePart.toString(), line, lineReader.getLineNumber(), textSourceFile.getInputFile().uri().toString()});
               recordMatch(recordMatchAsRulePart, lineReader.getLineNumber(), message);
           }
         }
       }
-      catch (IOException ex){
-        throw new RuntimeException(ex);
+      catch (IOException ex) {
+        throw new RuntimeException(String.format("Exception encountered when applying check %s to file %s", this.getClass().getName(), textSourceFile.getInputFile().uri().toString()), ex);
       }
 
   }
@@ -192,14 +191,12 @@ public class StringDisallowedIfMatchInAnotherFileCheck extends AbstractCrossFile
       for (CrossFileScanPrelimIssue currentPrelimIssue : prelimIssues) {
         if (RulePart.DisallowPattern == currentPrelimIssue.getRulePart()
               && this.getRuleKey().equals(currentPrelimIssue.getRuleKey())) {
-          // System.out.println("Raising issue on: " + currentPrelimIssue);
           createViolation(currentPrelimIssue.getLine(), currentPrelimIssue.getMessage());
         }
       }
 
       sourceFiles.add(getTextSourceFile());
     }
-
   }
 
 }

@@ -1,5 +1,6 @@
 package org.sonar.plugins.text.checks;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sonar.api.rule.RuleKey;
 
 public class TextIssue {
@@ -11,7 +12,13 @@ public class TextIssue {
   public TextIssue(final RuleKey ruleKey, final int line, final String message) {
     this.ruleKey = ruleKey;
     this.line = line;
-    this.message = message;
+    if (StringUtils.isBlank(message)) {
+      // Sending a null message to the sonarqube API when we later raise an issue will cause an NPE in the scanner. Here
+      // we substitute something when there's no message value.
+      this.message = String.format("Rule '%s:%s' violated. (rule has no message defined)", ruleKey.repository(), ruleKey.rule());
+    } else {
+      this.message = message;
+    }
   }
 
   public RuleKey getRuleKey() {
