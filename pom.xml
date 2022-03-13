@@ -12,7 +12,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
-    <sonarqube.instance.min.version>8.0</sonarqube.instance.min.version>
+    <sonarqube.instance.min.version>9.3</sonarqube.instance.min.version>
 
     <!-- This is honored when the compiler used for the build is Java9+. Using it avoids
            this JDK API issue:  https://www.morling.dev/blog/bytebuffer-and-the-dreaded-nosuchmethoderror/  -->
