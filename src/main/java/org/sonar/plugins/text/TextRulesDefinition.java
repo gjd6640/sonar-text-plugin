@@ -24,11 +24,10 @@ import org.sonar.api.server.rule.RulesDefinitionAnnotationLoader;
 import org.sonar.plugins.text.checks.TextChecksList;
 
 public class TextRulesDefinition implements RulesDefinition {
-  public static final String REPOSITORY_KEY = "text";
 
   @Override
   public void define(Context context) {
-    NewRepository repository = context.createRepository(REPOSITORY_KEY, TextLanguage.LANGUAGE_KEY).setName("Sonar Text Plugin");
+    NewRepository repository = context.createRepository(TextPlugin.REPOSITORY_KEY, TextPlugin.LANGUAGE_KEY).setName("Sonar Text Plugin");
 
     RulesDefinitionAnnotationLoader rulesLoader = new RulesDefinitionAnnotationLoader();
     rulesLoader.load(repository, TextChecksList.getChecksClassArray());

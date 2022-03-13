@@ -15,7 +15,7 @@ import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.scanner.fs.InputProject;
-import org.sonar.plugins.text.TextRulesDefinition;
+import org.sonar.plugins.text.TextPlugin;
 import org.sonar.plugins.text.checks.AbstractCrossFileCheck;
 import org.sonar.plugins.text.checks.AbstractTextCheck;
 import org.sonar.plugins.text.checks.TextChecksList;
@@ -36,7 +36,7 @@ public class TextIssueSensor implements Sensor {
    * Use of IoC to get FileSystem
    */
   public TextIssueSensor(final FileSystem fs, SensorContext sensorContext, final CheckFactory checkFactory) {
-    this.checks = checkFactory.create(TextChecksList.REPOSITORY_KEY).addAnnotatedChecks((Iterable<?>) TextChecksList.getCheckClasses());
+    this.checks = checkFactory.create(TextPlugin.REPOSITORY_KEY).addAnnotatedChecks((Iterable<?>) TextChecksList.getCheckClasses());
 
     this.fs = fs;
     this.project = sensorContext.project();
@@ -50,7 +50,7 @@ public class TextIssueSensor implements Sensor {
   @Override
   public void describe(SensorDescriptor descriptor) {
     descriptor.name("Community text plugin (sonar-text-plugin)");
-    descriptor.createIssuesForRuleRepositories(TextRulesDefinition.REPOSITORY_KEY);
+    descriptor.createIssuesForRuleRepositories(TextPlugin.REPOSITORY_KEY);
   }
 
   @Override

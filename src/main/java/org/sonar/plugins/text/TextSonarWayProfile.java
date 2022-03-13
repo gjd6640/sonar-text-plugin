@@ -11,8 +11,8 @@ public final class TextSonarWayProfile implements BuiltInQualityProfilesDefiniti
 
   @Override
   public void define(Context context) {
-    NewBuiltInQualityProfile sonarWay = context.createBuiltInQualityProfile(TextPlugin.SONAR_WAY_PROFILE_NAME, TextLanguage.LANGUAGE_KEY);
-    BuiltInQualityProfileJsonLoader.load(sonarWay, TextRulesDefinition.REPOSITORY_KEY, TextPlugin.SONAR_WAY_JSON_FILE_PATH);
+    NewBuiltInQualityProfile sonarWay = context.createBuiltInQualityProfile(TextPlugin.SONAR_WAY_PROFILE_NAME, TextPlugin.LANGUAGE_KEY);
+    BuiltInQualityProfileJsonLoader.load(sonarWay, TextPlugin.REPOSITORY_KEY, TextPlugin.SONAR_WAY_JSON_FILE_PATH);
     sonarWay.done();
   }
 

@@ -5,10 +5,6 @@ import java.util.List;
 
 public class TextChecksList {
 
-  public static final String REPOSITORY_KEY = "text";
-  public static final String REPOSITORY_NAME = "SonarQube";
-  public static final String SONAR_WAY_PROFILE_NAME = "Sonar way";
-
   private TextChecksList() { }
 
   public static Class<?>[] getChecksClassArray() {

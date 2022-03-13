@@ -5,7 +5,7 @@
   <groupId>org.codehaus.sonar</groupId>
   <artifactId>sonar-text-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>1.1.5</version>
+  <version>1.1.6</version>
 
   <name>Sonar Text Plugin</name>
 
@@ -95,6 +95,7 @@
         <extensions>true</extensions>
         <configuration>
           <sonarQubeMinVersion>${sonarqube.instance.min.version}</sonarQubeMinVersion>
+          <pluginKey>community-text</pluginKey> <!-- Unless we set this it somehow decides that "text" is the key which conflicts with SQ v9.3's new built-in plugin. -->
           <pluginClass>org.sonar.plugins.text.TextPlugin</pluginClass>
         </configuration>
       </plugin>

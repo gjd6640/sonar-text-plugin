@@ -32,7 +32,7 @@ import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.rule.RuleKey;
-import org.sonar.plugins.text.TextLanguage;
+import org.sonar.plugins.text.TextPlugin;
 import org.sonar.plugins.text.checks.AbstractTextCheck;
 import org.sonar.plugins.text.checks.TextIssue;
 import org.sonar.plugins.text.checks.TextSourceFile;
@@ -97,8 +97,8 @@ public class IssueSensorTest {
 	    // Setup
 
 	    // One of these will NOT be scanned due to an exception being encountered
-	    fs.add(createInputFile("setup.properties", TextLanguage.LANGUAGE_KEY));
-      fs.add(createInputFile("setup.properties2", TextLanguage.LANGUAGE_KEY));
+	    fs.add(createInputFile("setup.properties", TextPlugin.LANGUAGE_KEY));
+      fs.add(createInputFile("setup.properties2", TextPlugin.LANGUAGE_KEY));
 
 	    final AtomicBoolean firstCall = new AtomicBoolean(true);
 
