@@ -37,7 +37,7 @@ The uses that I had in mind when building this were:
 4. Reboot Sonar
 
 ### To configure your first rule:
-1. Log in to Sonar, go to Quality Profiles, find the new "Text" section, and create a new profile under that
+1. Log in to Sonar, go to Quality Profiles, find the new "Text (Community)" section, and create a new profile under that
 2. Make the new Quality Profile the default Test profile
 3. Add an initial rule to the new Quality Profile's ruleset. Do this by first finding the _inactive_ "Simple Regex Match" rule. Click on that rule.
 4. Click the "create" button that appears next to the words "CUSTOM RULES" at the bottom of the rule definition
