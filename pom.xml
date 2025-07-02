@@ -2,16 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.codehaus.sonar</groupId>
-  <artifactId>sonar-text-plugin</artifactId>
+  <groupId>org.sonarsource.txt</groupId>
+  <artifactId>sonar-txt-plugin</artifactId>
   <packaging>sonar-plugin</packaging>
-  <version>1.1.6</version>
+  <version>2.0.0</version>
 
-  <name>Sonar Text Plugin</name>
+  <name>Text (Community)</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <sonar.buildVersion>8.9.2.46101</sonar.buildVersion>
+    <sonar.buildVersion>9.3.0.51899</sonar.buildVersion>
     <sonarqube.instance.min.version>9.3</sonarqube.instance.min.version>
 
     <!-- This is honored when the compiler used for the build is Java9+. Using it avoids
@@ -95,8 +95,7 @@
         <extensions>true</extensions>
         <configuration>
           <sonarQubeMinVersion>${sonarqube.instance.min.version}</sonarQubeMinVersion>
-          <pluginKey>community-text</pluginKey> <!-- Unless we set this it somehow decides that "text" is the key which conflicts with SQ v9.3's new built-in plugin. -->
-          <pluginClass>org.sonar.plugins.text.TextPlugin</pluginClass>
+          <pluginClass>org.sonar.plugins.txt.TextPlugin</pluginClass>
         </configuration>
       </plugin>
       <plugin>
