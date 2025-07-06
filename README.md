@@ -53,7 +53,7 @@ After you've done the above you'll be ready to run a scan and see the first rule
 
 Truly understanding library dependencies & specifying rules about those dependencies in a build tool agnostic manner is out of scope. That fits better in a "sonar-dependencies-plugin" that'd understand library dependency reports such as the Maven dependency plugin generates (teach it to understand dependency reports from several popular build tools). That plugin would have a rule template to flag problematic dependencies. It might also expose a custom API that other Sonar plugins can reference when running their rules; for example, the Java plugin might let you apply both a PMD XPath expression and a library version check and only raise an issue when both 'match' (use of a known buggy method / maybe multithreaded use of a call known to be non-threadsafe / enabling a feature via a property that doesn't work properly if a certain library version is being used).
 
-### Upgrade steps when moving to version 3.0.0
+### Upgrade steps when moving to version 2.0.0
 
     Install new plugin version (requires restart)
     Edit the plugin configuration in the Sonarqube UI by copying any customized configuration values from the older plugin's configuration to the new one. For example, if you added and file suffixes to "sonar-text-plugin.file.suffixes" you'll need to copy those over to the "sonar.txt.file.suffixes" setting.
