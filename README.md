@@ -56,9 +56,9 @@ Truly understanding library dependencies & specifying rules about those dependen
 ### Upgrade steps when moving to version 3.0.0
 
     Install new plugin version (requires restart)
-    Edit the plugin configuration in the Sonarqube UI by copying any customized configuration values from the older plugin's configuration to the new one. For example, if you may have added some file suffixes there.
+    Edit the plugin configuration in the Sonarqube UI by copying any customized configuration values from the older plugin's configuration to the new one. For example, if you added and file suffixes to "sonar-text-plugin.file.suffixes" you'll need to copy those over to the "sonar.txt.file.suffixes" setting.
     Migrate your rules/quality profiles
         1. Export your quality profile
-        2. Edit the resulting text file by replacing "text" key with "txt"
+        2. Edit the resulting text file by replacing all occurrences of the "text" language key and "text" repository key with "txt".
         3. Import the edited file
     Uninstall old plugin (requires restart)
